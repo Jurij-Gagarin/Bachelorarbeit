@@ -48,3 +48,5 @@ def plot_lattice(lattice):
 n = 5
 L = displace_lattice(create_lattice(n), n)
 plot_lattice(L)
+
+print('something different')
