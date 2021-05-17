@@ -3,6 +3,7 @@ import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 
 def measure_time(n0, n_max, digit=2):
@@ -36,13 +37,40 @@ def energy_continuous_stretching(dim, max_stretch, min_stretch=0, export=False):
     return results
 
 
-def plot_from_csv(path):
+def x2(x, a):
+    return a*x**2
+
+
+def x4(x, a):
+    return a*x**4
+
+
+def plot_from_csv(path, fit=False, a0=1):
     df = pd.read_csv(path)
-    df.plot(x='i', y='min energy')
+    df.i = df.i*0.25
+    df.plot(x='i', y='min energy', marker='o')
+    plt.xlabel('Auslenkung in % der Gitterbreite')
+    plt.ylabel('berechnete minimale Energie')
+
+    if fit:
+        x = df['i']
+        y = df['min energy']
+        pars2, cov2 = curve_fit(x2, x, y)
+        pars4, cov4 = curve_fit(x4, x, y)
+
+    plt.plot(x, pars2[0]*x**2, label='x^2')
+    plt.plot(x, pars4[0]*x**4, color='red', label='x^4')
+    plt.legend()
+    plt.grid()
     plt.show()
 
 
-path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim=9_min=0_max=20_13:15:15.csv'
-plot_from_csv(path)
+path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim=9_min=0_max=40_19:23:44.csv'
+print(plot_from_csv(path, fit=True))
 
-#energy_continuous_stretching(9, 20, 0, export=True)
+#energy_continuous_stretching(9, 40, 0, export=True)
+
+# TODO: create a function that minimises lattices with different number of nodes that are manipulated in the same way
+#  (same point, some absolute value)
+# TODO: test lattice with very large displacements
+

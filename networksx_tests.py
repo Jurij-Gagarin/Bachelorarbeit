@@ -13,9 +13,9 @@ def generate_initial_plot_positions(lattice):
     return pos
 
 
-def generate_manipulated_plot_positions(dim, lattice):
+def generate_manipulated_plot_positions(dim, lattice, stretch_factor):
     pos = {}
-    list_mobile_coords = hl.run(dim, plot=False).x
+    list_mobile_coords = hl.run(dim, stretch_factor=stretch_factor, plot=False).x
 
     for i in range(0, len(lattice)):
         if lattice[i].return_mobility():
@@ -28,7 +28,8 @@ def generate_manipulated_plot_positions(dim, lattice):
     return pos
 
 
-def draw_initial_graph(A, angle, pos):
+# TODO: function that plots the cross section at the manipulated point
+def draw_initial_graph(A, angle, pos, dim, d, nodes=False):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
@@ -38,11 +39,13 @@ def draw_initial_graph(A, angle, pos):
         fig = plt.figure(figsize=(12, 12))
         ax = Axes3D(fig)
 
-        for key, value in pos.items():
-            xi = value[0]
-            yi = value[1]
-            zi = value[2]
-            ax.scatter(xi, yi, zi, c='red', edgecolors='k')
+        if nodes:
+            for key, value in pos.items():
+                xi = value[0]
+                yi = value[1]
+                zi = value[2]
+                ax.scatter(xi, yi, zi, c='red', edgecolors='k')
+        ax.set_zlim3d(0, d*dim/2)
 
         for i, j in enumerate(G.edges()):
             x = np.array((pos[j[0]][0], pos[j[1]][0]))
@@ -59,17 +62,16 @@ def draw_initial_graph(A, angle, pos):
     plt.show()
 
 
-dim = 18
-d = 1
-stretch_factor = 5
+def plot_graph(dim, stretch_factor, d=1, nodes=False):
+    ls = hl.create_lattice(dim, d)
+    l = ls[0]
+    l = hl.manipulate_lattice(l, d, dim, ls[1], stretch_factor)
+    matrices = hl.adjacency_matrix(l)
+    A = np.add(matrices[0], matrices[1])
 
-ls = hl.create_lattice(dim, d)
-l = ls[0]
-l = hl.manipulate_lattice(l, d, dim, ls[1], stretch_factor)
-matrices = hl.adjacency_matrix(l)
-A = np.add(matrices[0], matrices[1])
+    draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l, stretch_factor=stretch_factor), d, dim,
+                       nodes=nodes)
 
-draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l))
-
+plot_graph(5,8)
 
 

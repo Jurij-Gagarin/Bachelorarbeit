@@ -90,8 +90,15 @@ def manipulate_lattice_random(lattice, n=1):
 def manipulate_lattice(lattice, d, dim, point, stretch_factor=5):
     # stretch with factor = 1: 5% of half lattice length
     # stretch with factor = 5 (default): 25% of half lattice length
-    j = stretch_factor*d*dim/800
+    j = stretch_factor*d*dim/400
     lattice[point] = lattice[point].change_coordinates([0, 0, j])
+    lattice[point] = lattice[point].change_mobility(False)
+
+    return lattice
+
+
+def manipulate_lattice_absolute_value(lattice, point, displace_value):
+    lattice[point] = lattice[point].change_coordinates([0, 0, displace_value])
     lattice[point] = lattice[point].change_mobility(False)
 
     return lattice
@@ -192,6 +199,7 @@ def list_of_coordinates(lattice):
     return list_of_immobile_coords, list_of_mobile_coords, immobile_dict, mobile_dict
 
 
+# TODO: optimize this function
 def energy_func(x, xdict, A, xs, xsdict, As, lattice, d=1, k=2):
     mrows, mcols = np.where(A == 1)
     imrows, imcols = np.where(As == 1)
@@ -276,8 +284,17 @@ def run(dim, d=1, k=2, stretch_factor=5, plot=True):
     return res
 
 
+def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True):
+    ls = create_lattice(dim, d)
+    l = ls[0]
+    l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
+    res = minimize_energy(l, d, k)
+
+    if plot:
+        assemble_result(res.x, list_of_coordinates(l)[0])
+
+    return res
+
+
 if __name__ == '__main__':
-    run(8, stretch_factor=1)
-
-
-
+    run_absolute_displacement(5, 1)
