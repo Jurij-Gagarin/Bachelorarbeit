@@ -2,6 +2,7 @@ import hexagonal_lattice as hl
 import time
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 def measure_time(n0, n_max, digit=2):
@@ -22,7 +23,7 @@ def energy_continuous_stretching(dim, max_stretch, min_stretch=0, export=False):
     results = []
 
     for i in range(min_stretch, max_stretch+1):
-        results.append([i, hl.run(dim, stretch_factor=i, plot=False)])
+        results.append([i, hl.run(dim, stretch_factor=i, plot=False).fun])
         print(results[i-min_stretch])
 
     if export:
@@ -33,3 +34,15 @@ def energy_continuous_stretching(dim, max_stretch, min_stretch=0, export=False):
         df.to_csv(path)
 
     return results
+
+
+def plot_from_csv(path):
+    df = pd.read_csv(path)
+    df.plot(x='i', y='min energy')
+    plt.show()
+
+
+path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim=9_min=0_max=20_13:15:15.csv'
+plot_from_csv(path)
+
+#energy_continuous_stretching(9, 20, 0, export=True)

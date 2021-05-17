@@ -23,6 +23,7 @@ def create_lattice(n, box_length=100):
         I += 1
     return K
 
+
 # takes a lattice and returns a randomly (default) displaced lattice
 def displace_lattice(lattice, n, m=0, random=True):
     D = np.zeros((n**2, 3))
@@ -48,5 +49,3 @@ def plot_lattice(lattice):
 n = 5
 L = displace_lattice(create_lattice(n), n)
 plot_lattice(L)
-
-print('something different')

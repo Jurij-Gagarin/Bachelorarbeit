@@ -90,7 +90,7 @@ def manipulate_lattice_random(lattice, n=1):
 def manipulate_lattice(lattice, d, dim, point, stretch_factor=5):
     # stretch with factor = 1: 5% of half lattice length
     # stretch with factor = 5 (default): 25% of half lattice length
-    j = stretch_factor*d*dim/40
+    j = stretch_factor*d*dim/800
     lattice[point] = lattice[point].change_coordinates([0, 0, j])
     lattice[point] = lattice[point].change_mobility(False)
 
@@ -273,10 +273,11 @@ def run(dim, d=1, k=2, stretch_factor=5, plot=True):
     if plot:
         assemble_result(res.x, list_of_coordinates(l)[0])
 
-    return res.fun
+    return res
 
 
 if __name__ == '__main__':
-    pass
+    run(8, stretch_factor=1)
+
 
 
