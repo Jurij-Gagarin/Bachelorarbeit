@@ -63,12 +63,12 @@ def plot_from_csv(path, fit=False, a0=1):
     plt.legend()
     plt.grid()
     plt.show()
+    # path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim=9_min=0_max=40_19:23:44.csv'
 
 
-path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim=9_min=0_max=40_19:23:44.csv'
-print(plot_from_csv(path, fit=True))
-
-#energy_continuous_stretching(9, 40, 0, export=True)
+def absolute_stretching(dims):
+    # dims is a list that contains dimensions to create multiple lattices
+    pass
 
 # TODO: create a function that minimises lattices with different number of nodes that are manipulated in the same way
 #  (same point, some absolute value)
