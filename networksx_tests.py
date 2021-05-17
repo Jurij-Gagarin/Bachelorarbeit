@@ -72,6 +72,5 @@ def plot_graph(dim, stretch_factor, d=1, nodes=False):
     draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l, stretch_factor=stretch_factor), d, dim,
                        nodes=nodes)
 
+
 plot_graph(5,8)
-
-
