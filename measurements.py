@@ -58,17 +58,37 @@ def plot_from_csv(path, fit=False, a0=1):
         pars2, cov2 = curve_fit(x2, x, y)
         pars4, cov4 = curve_fit(x4, x, y)
 
-    plt.plot(x, pars2[0]*x**2, label='x^2')
-    plt.plot(x, pars4[0]*x**4, color='red', label='x^4')
+        plt.plot(x, pars2[0]*x**2, label='x^2')
+        plt.plot(x, pars4[0]*x**4, color='red', label='x^4')
     plt.legend()
     plt.grid()
     plt.show()
     # path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim=9_min=0_max=40_19:23:44.csv'
 
 
-def absolute_stretching(dims):
-    # dims is a list that contains dimensions to create multiple lattices
-    pass
+def absolute_stretching(dim, displace_value, d=1, k=2):
+    # dims is a list that contains dimensions to create multiple lattices.
+    res = hl.run_absolute_displacement(dim, displace_value, d, k, plot=False)
+
+    return res.fun
+
+
+def absolute_stretching_multi_lattice(dims, displace_value, num, d=1, k=2):
+    displace_values = np.linspace(0, displace_value, num=num)
+    all_y = []
+
+    for i in range(0, len(dims)):
+        y = []
+        for j in range(0, len(displace_values)):
+            print(dims[i], displace_values[j])
+            y.append(absolute_stretching(dims[i], displace_values[j], d, k))
+        all_y.append(y)
+
+    return displace_values, all_y
+
+
+print(absolute_stretching_multi_lattice([5, 6], 2, 3))
+
 
 # TODO: create a function that minimises lattices with different number of nodes that are manipulated in the same way
 #  (same point, some absolute value)
