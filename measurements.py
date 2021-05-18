@@ -45,7 +45,7 @@ def x4(x, a):
     return a*x**4
 
 
-def plot_from_csv(path, fit=False, a0=1):
+def plot_from_csv(path, fit=False):
     df = pd.read_csv(path)
     df.i = df.i*0.25
     df.plot(x='i', y='min energy', marker='o')
@@ -92,16 +92,15 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
     ys = values[1]
 
     for i in range(0, len(ys)):
-        plt.plot(x, ys[i], label=f'dim={dims[i]}')
+        plt.plot(x, ys[i], label=f'dim={dims[i]}', marker='o')
         pars, cov = curve_fit(x4, x, ys[i])
         plt.plot(x, pars[0] * x ** 4, label=f'fit dim={dims[i]} with x^4')
     plt.legend()
     plt.show()
 
 
-
-dims=[4,5]
-plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 3, 5), dims)
+dims = [7, 8]
+plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 0.25, 5), dims)
 
 
 

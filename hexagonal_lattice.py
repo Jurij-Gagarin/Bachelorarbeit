@@ -297,4 +297,6 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True):
 
 
 if __name__ == '__main__':
-    run_absolute_displacement(5, 1)
+    lattice = create_lattice(5)
+    l = manipulate_lattice_absolute_value(lattice[0], lattice[1], 1)
+    plot_lattice(l)
