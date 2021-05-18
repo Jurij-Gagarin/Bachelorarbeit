@@ -87,7 +87,22 @@ def absolute_stretching_multi_lattice(dims, displace_value, num, d=1, k=2):
     return displace_values, all_y
 
 
-print(absolute_stretching_multi_lattice([5, 6], 2, 3))
+def plot_multiple_absolute_stretching(values, dims, fit=True):
+    x = values[0]
+    ys = values[1]
+
+    for i in range(0, len(ys)):
+        plt.plot(x, ys[i], label=f'dim={dims[i]}')
+        pars, cov = curve_fit(x4, x, ys[i])
+        plt.plot(x, pars[0] * x ** 4, label=f'fit dim={dims[i]} with x^4')
+    plt.legend()
+    plt.show()
+
+
+
+dims=[4,5]
+plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 3, 5), dims)
+
 
 
 # TODO: create a function that minimises lattices with different number of nodes that are manipulated in the same way
