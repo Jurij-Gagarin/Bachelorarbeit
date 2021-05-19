@@ -228,6 +228,34 @@ def energy_func(x, xdict, A, xs, xsdict, As, lattice, d=1, k=2):
     return 0.5*k*total_energy
 
 
+def energy_func_prep(A, As, d):
+    mrows, mcols = np.where(A == 1)
+    imrows, imcols = np.where(As == 1)
+    e = d / math.sqrt(3)
+    return mrows, mcols, imrows, imcols, e
+
+
+def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, d=1, k=2):
+    total_energy = 0
+
+    for i in range(len(mrows)):
+        rpos = xdict[mrows[i]]
+        cpos = xdict[mcols[i]]
+        total_energy += (math.sqrt((x[rpos]-x[cpos])**2+(x[rpos+1]-x[cpos+1])**2+(x[rpos+2]-x[cpos+2])**2) - e)**2
+
+    for i in range(len(imrows)):
+        if (lattice[imrows[i]].return_mobility() is True) and (lattice[imcols[i]].return_mobility() is False):
+            rpos = xdict[imrows[i]]
+            cpos = xsdict[imcols[i]]
+            total_energy += (math.sqrt((x[rpos]-xs[cpos])**2+(x[rpos+1]-xs[cpos+1])**2+(x[rpos+2]-xs[cpos+2])**2)-e)**2
+        elif (lattice[imrows[i]].return_mobility() is False) and (lattice[imcols[i]].return_mobility() is True):
+            rpos = xsdict[imrows[i]]
+            cpos = xdict[imcols[i]]
+            total_energy += (math.sqrt((xs[rpos]-x[cpos])**2+(xs[rpos+1]-x[cpos+1])**2+(xs[rpos+2]-x[cpos+2])**2)-e)**2
+
+    return 0.5 * k * total_energy
+
+
 def minimize_energy(lattice, d=1, k=2):
     func = energy_func
     r = list_of_coordinates(lattice)
@@ -235,6 +263,15 @@ def minimize_energy(lattice, d=1, k=2):
     A = adjacency_matrix(lattice)
 
     return opt.minimize(func, x0, args=(r[3], A[0], r[0], r[2], A[1], lattice, d, k))
+
+
+def minimize_energy_opt(lattice, d=1, k=2):
+    r = list_of_coordinates(lattice)
+    A = adjacency_matrix(lattice)
+    preps = energy_func_prep(A[0], A[1], d)
+
+    return opt.minimize(energy_func_opt, r[1], args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                                     lattice, preps[4], d, k))
 
 
 def assemble_result(result, fixed_values):
@@ -297,6 +334,8 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True):
 
 
 if __name__ == '__main__':
-    lattice = create_lattice(5)
-    l = manipulate_lattice_absolute_value(lattice[0], lattice[1], 1)
-    plot_lattice(l)
+
+    dic = {1: 'Adam', 2: 'Eva'}
+    print(dic[1])
+    dic = {v: k for k, v in dic.items()}
+    print(dic['Adam'])

@@ -20,6 +20,28 @@ def measure_time(n0, n_max, digit=2):
     return times
 
 
+def energy_func_speedtest(dim, num, d=1, k=2):
+    lattice = hl.create_lattice(dim)
+    l = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], 0.3)
+    t1 = 0
+    t2 = 0
+    for i in range(num):
+        start_time = time.time()
+        energy1 = hl.minimize_energy(l).fun
+        end_time = time.time()
+        t1 += end_time - start_time
+
+        start_time = time.time()
+        energy2 = hl.minimize_energy_opt(l).fun
+        end_time = time.time()
+        t2 += end_time - start_time
+
+    return energy1, energy2, t1, t2
+
+
+print(energy_func_speedtest(13, 1))
+
+
 def energy_continuous_stretching(dim, max_stretch, min_stretch=0, export=False):
     results = []
 
@@ -99,8 +121,7 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
     plt.show()
 
 
-dims = [7, 8]
-plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 0.25, 5), dims)
+
 
 
 
