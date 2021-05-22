@@ -134,7 +134,7 @@ def plot_lattice(lattice):
     plt.show()
 
 
-def adjacency_matrix(lattice, plot=False, show_graph=False):
+def adjacency_matrix(lattice, plot=False):
     # For n particles this creates a n x n matrix that shows the connections between the nodes
     # A represents only connections of movable particles
     # As represents only connections of immovable particles
@@ -170,14 +170,6 @@ def adjacency_matrix(lattice, plot=False, show_graph=False):
         plt.imshow(A)
         plt.show()
 
-    if show_graph:
-        rows, cols = np.where(A == 1)
-        edges = zip(rows.tolist(), cols.tolist())
-        gr = nx.Graph()
-        gr.add_edges_from(edges)
-        nx.draw(gr, node_size=50)
-        plt.show()
-
     return A, As
 
 
@@ -199,7 +191,6 @@ def list_of_coordinates(lattice):
     return list_of_immobile_coords, list_of_mobile_coords, immobile_dict, mobile_dict
 
 
-# TODO: optimize this function
 def energy_func(x, xdict, A, xs, xsdict, As, lattice, d=1, k=2):
     mrows, mcols = np.where(A == 1)
     imrows, imcols = np.where(As == 1)
@@ -254,6 +245,38 @@ def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice,
             total_energy += (math.sqrt((xs[rpos]-x[cpos])**2+(xs[rpos+1]-x[cpos+1])**2+(xs[rpos+2]-x[cpos+2])**2)-e)**2
 
     return 0.5 * k * total_energy
+
+
+def energy_func_jac(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, d=1, k=2):
+    len_x = len(x)
+    grad = np.zeros(len_x)
+
+    # Key is the number of x-coord in x. Gives corresponding particle in adjacency matrix
+    xdict_reverse = {v: k for k, v in xdict.items()}
+    for i in range(int(len_x/3)):
+        index = np.where(A[xdict_reverse[3*i]] == 1)[0]
+        print(index)
+        for j in range(len(index)):
+            # cn = corresponding_node
+            if lattice[index[j]].return_mobility():
+                cn = xdict[index[j]]
+                root = ((x[3*i]-x[cn])**2+(x[3*i+1]-x[cn+1])**2+(x[3*i+2]-x[cn+2])**2)**.5
+                factor = k*(root-e)/root**.5
+                grad[3*i] += factor*(x[3*i]-x[cn])
+                grad[3*i+1] += factor*(x[3*i+1]-x[cn+1])
+                grad[3*i+2] += factor*(x[3*i+2]-x[cn+2])
+            else:
+                cn = xsdict[index[j]]
+                root = ((x[3*i]-xs[cn])**2+(x[3*i+1]-xs[cn+1])**2+(x[3*i+2]-xs[cn+2])**2)**.5
+                factor = k*(root-e)/root**.5
+                grad[3*i] += factor*(x[3*i]-xs[cn])
+                grad[3*i+1] += factor*(x[3*i+1]-xs[cn+1])
+                grad[3*i+2] += factor*(x[3*i+2]-xs[cn+2])
+
+    return xdict_reverse, A, grad
+
+
+
 
 
 def minimize_energy(lattice, d=1, k=2):
@@ -334,8 +357,17 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True):
 
 
 if __name__ == '__main__':
+    dim=3
+    d=1
+    displace_value=0.1
+    ls = create_lattice(dim, d)
+    l = ls[0]
+    l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
+    r = list_of_coordinates(l)
+    A = adjacency_matrix(l)
+    preps = energy_func_prep(A[0], A[1], d)
+    Aa = np.add(A[0], A[1])
+    print(energy_func_jac(r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                                     l, preps[4], Aa, d))
 
-    dic = {1: 'Adam', 2: 'Eva'}
-    print(dic[1])
-    dic = {v: k for k, v in dic.items()}
-    print(dic['Adam'])
+    plot_lattice(l)

@@ -39,7 +39,7 @@ def energy_func_speedtest(dim, num, d=1, k=2):
     return energy1, energy2, t1, t2
 
 
-print(energy_func_speedtest(13, 1))
+print(energy_func_speedtest(9, 1))
 
 
 def energy_continuous_stretching(dim, max_stretch, min_stretch=0, export=False):
