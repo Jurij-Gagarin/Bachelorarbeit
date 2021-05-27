@@ -16,10 +16,6 @@ def minimize_function():
     return opt.minimize(function, x0, jac=jacobian_function, args=([1.e-07, 10]), tol=1.e-15)
 
 
-def derivative(i, x, y, k):
-    return .5*k*()
-
-
 
 
 print(minimize_function())

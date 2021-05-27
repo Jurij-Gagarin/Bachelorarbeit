@@ -11,10 +11,10 @@ def measure_time(n0, n_max, digit=2):
 
     for n in range(n0, n_max+1):
         start_time = time.time()
-        res = hl.run(n, plot=False)
+        res = hl.run(n, stretch_factor=5, plot=False).fun
         end_time = time.time()
         delta_t = round((end_time - start_time)/60, digit)
-        print(f'With dim = {n}, i.e. {len(hl.create_lattice(n))} nodes,'
+        print(f'With dim = {n}, i.e. {len(hl.create_lattice(n)[0])} nodes,'
               f' it took {delta_t}min to calculate the minimal energy {res}J.')
         times[n - n0] = delta_t
     return times
@@ -37,9 +37,6 @@ def energy_func_speedtest(dim, num, d=1, k=2):
         t2 += end_time - start_time
 
     return energy1, energy2, t1, t2
-
-
-print(energy_func_speedtest(9, 1))
 
 
 def energy_continuous_stretching(dim, max_stretch, min_stretch=0, export=False):
@@ -120,12 +117,16 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
     plt.legend()
     plt.show()
 
+def energy_convergence(min_dim, max_dim, dv):
+    x = list(range(min_dim, max_dim+1))
+    y = np.zeros(max_dim - min_dim+1)
+    for i in x:
+        y[i-min_dim] = hl.run_absolute_displacement(i, dv, plot=False).fun
+        print(f'current dim={i}')
 
+    plt.plot(x, y)
+    plt.show()
 
+energy_convergence(3, 15, 0.05)
 
-
-
-# TODO: create a function that minimises lattices with different number of nodes that are manipulated in the same way
-#  (same point, some absolute value)
-# TODO: test lattice with very large displacements
 

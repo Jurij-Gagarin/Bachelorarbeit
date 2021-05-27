@@ -48,7 +48,9 @@ def draw_initial_graph(A, angle, pos, dim, d, nodes=False):
                 yi = value[1]
                 zi = value[2]
                 ax.scatter(xi, yi, zi, c='red', edgecolors='k')
-        # ax.set_zlim3d(0, d*dim/2)
+        #ax.set_zlim3d(0, d*dim/2)
+        ax.set_xlim3d(-4.5, 4.5)
+        ax.set_ylim3d(-4.5, 4.5)
 
         for i, j in enumerate(G.edges()):
             x = np.array((pos[j[0]][0], pos[j[1]][0]))
@@ -79,4 +81,4 @@ def plot_graph(dim, stretch_factor=1, displace_value=1, factor=False, d=1, k=2, 
                        d, dim, nodes=nodes)
 
 
-plot_graph(15, displace_value=0.3, d=1)
+plot_graph(20, displace_value=0.07, d=1)
