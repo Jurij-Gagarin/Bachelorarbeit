@@ -74,10 +74,9 @@ def plot_from_csv(path, fit=False):
     if fit:
         x = df['i']
         y = df['min energy']
-        pars2, cov2 = curve_fit(x2, x, y)
         pars4, cov4 = curve_fit(x4, x, y)
 
-        plt.plot(x, pars2[0]*x**2, label='x^2')
+        residuals = y - x4(x, pars4)
         plt.plot(x, pars4[0]*x**4, color='red', label='x^4')
     plt.legend()
     plt.grid()
@@ -113,8 +112,14 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
     for i in range(0, len(ys)):
         plt.plot(x, ys[i], label=f'dim={dims[i]}', marker='o')
         pars, cov = curve_fit(x4, x, ys[i])
-        plt.plot(x, pars[0] * x ** 4, label=f'fit dim={dims[i]} with x^4, a={round(pars[0],4)}')
+        ss_res = np.sum((ys[i] - x4(x, pars[0]))**2)
+        ss_tot = np.sum((ys[i]-np.mean(ys[i]))**2)
+        r2 = round(1 - (ss_res / ss_tot), 2)
+
+        plt.plot(x, x4(x, pars[0]), label=f'fit dim={dims[i]} with a*x^4, a={round(pars[0],4)}, R^2={r2}')
     plt.legend()
+    plt.xlabel('dim')
+    plt.ylabel('minimale Energie')
     plt.show()
 
 
@@ -129,7 +134,7 @@ def energy_convergence(min_dim, max_dim, dv):
     plt.show()
 
 
-dims = [7, 8, 9]
-plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 10, 20), dims)
+#dims = [3, 5]
+#plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 10, 20), dims)
 
 
