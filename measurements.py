@@ -113,9 +113,10 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
     for i in range(0, len(ys)):
         plt.plot(x, ys[i], label=f'dim={dims[i]}', marker='o')
         pars, cov = curve_fit(x4, x, ys[i])
-        plt.plot(x, pars[0] * x ** 4, label=f'fit dim={dims[i]} with x^4')
+        plt.plot(x, pars[0] * x ** 4, label=f'fit dim={dims[i]} with x^4, a={round(pars[0],4)}')
     plt.legend()
     plt.show()
+
 
 def energy_convergence(min_dim, max_dim, dv):
     x = list(range(min_dim, max_dim+1))
@@ -127,6 +128,8 @@ def energy_convergence(min_dim, max_dim, dv):
     plt.plot(x, y)
     plt.show()
 
-energy_convergence(3, 15, 0.05)
+
+dims = [7, 8, 9]
+plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 10, 20), dims)
 
 
