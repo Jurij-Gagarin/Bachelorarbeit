@@ -1,7 +1,6 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import networkx as nx
 import random as rn
 from scipy import optimize as opt
 
@@ -90,7 +89,7 @@ def manipulate_lattice_random(lattice, n=1):
 def manipulate_lattice(lattice, d, dim, point, stretch_factor=5):
     # stretch with factor = 1: 5% of half lattice length
     # stretch with factor = 5 (default): 25% of half lattice length
-    j = stretch_factor*d*dim/400
+    j = stretch_factor*d*dim/100
     lattice[point] = lattice[point].change_coordinates([0, 0, j])
     lattice[point] = lattice[point].change_mobility(False)
 
@@ -134,7 +133,7 @@ def plot_lattice(lattice):
     plt.show()
 
 
-def adjacency_matrix(lattice, plot=False, show_graph=False):
+def adjacency_matrix(lattice, plot=False):
     # For n particles this creates a n x n matrix that shows the connections between the nodes
     # A represents only connections of movable particles
     # As represents only connections of immovable particles
@@ -163,19 +162,10 @@ def adjacency_matrix(lattice, plot=False, show_graph=False):
                         A[i][j] = 1
                     else:
                         As[i][j] = 1
-    A = np.triu(A)
-    As = np.triu(As)
-    if plot:
-        fig = plt.figure(figsize=(8, 6))
-        plt.imshow(A)
-        plt.show()
 
-    if show_graph:
-        rows, cols = np.where(A == 1)
-        edges = zip(rows.tolist(), cols.tolist())
-        gr = nx.Graph()
-        gr.add_edges_from(edges)
-        nx.draw(gr, node_size=50)
+    if plot:
+        plt.imshow(np.add(A, As))
+        plt.axis('off')
         plt.show()
 
     return A, As
@@ -199,7 +189,6 @@ def list_of_coordinates(lattice):
     return list_of_immobile_coords, list_of_mobile_coords, immobile_dict, mobile_dict
 
 
-# TODO: optimize this function
 def energy_func(x, xdict, A, xs, xsdict, As, lattice, d=1, k=2):
     mrows, mcols = np.where(A == 1)
     imrows, imcols = np.where(As == 1)
@@ -228,6 +217,62 @@ def energy_func(x, xdict, A, xs, xsdict, As, lattice, d=1, k=2):
     return 0.5*k*total_energy
 
 
+def energy_func_prep(A, As, d):
+    mrows, mcols = np.where(A == 1)
+    imrows, imcols = np.where(As == 1)
+    e = d / math.sqrt(3)
+    return mrows, mcols, imrows, imcols, e
+
+
+def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, d=1, k=2):
+    total_energy = 0
+
+    for i in range(len(mrows)):
+        rpos = xdict[mrows[i]]
+        cpos = xdict[mcols[i]]
+        total_energy += (math.sqrt((x[rpos]-x[cpos])**2+(x[rpos+1]-x[cpos+1])**2+(x[rpos+2]-x[cpos+2])**2) - e)**2
+
+    for i in range(len(imrows)):
+        if (lattice[imrows[i]].return_mobility() is True) and (lattice[imcols[i]].return_mobility() is False):
+            rpos = xdict[imrows[i]]
+            cpos = xsdict[imcols[i]]
+            total_energy += (math.sqrt((x[rpos]-xs[cpos])**2+(x[rpos+1]-xs[cpos+1])**2+(x[rpos+2]-xs[cpos+2])**2)-e)**2
+        elif (lattice[imrows[i]].return_mobility() is False) and (lattice[imcols[i]].return_mobility() is True):
+            rpos = xsdict[imrows[i]]
+            cpos = xdict[imcols[i]]
+            total_energy += (math.sqrt((xs[rpos]-x[cpos])**2+(xs[rpos+1]-x[cpos+1])**2+(xs[rpos+2]-x[cpos+2])**2)-e)**2
+
+    return .5 * k * total_energy
+
+
+def energy_func_jac(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, d=1, k=2):
+    len_x = len(x)
+    grad = np.zeros(len_x)
+
+    # Key is the number of x-coord in x. Gives corresponding particle in adjacency matrix
+    xdict_reverse = {v: k for k, v in xdict.items()}
+    for i in range(int(len_x/3)):
+        index = np.where(A[xdict_reverse[3*i]] == 1)[0]
+        for j in range(len(index)):
+            # cn = corresponding_node
+            if lattice[index[j]].return_mobility():
+                cn = xdict[index[j]]
+                root = ((x[3*i]-x[cn])**2+(x[3*i+1]-x[cn+1])**2+(x[3*i+2]-x[cn+2])**2)**.5
+                factor = k*(root-e)/root**.5
+                grad[3*i] += factor*(x[3*i]-x[cn])
+                grad[3*i+1] += factor*(x[3*i+1]-x[cn+1])
+                grad[3*i+2] += factor*(x[3*i+2]-x[cn+2])
+            else:
+                cn = xsdict[index[j]]
+                root = ((x[3*i]-xs[cn])**2+(x[3*i+1]-xs[cn+1])**2+(x[3*i+2]-xs[cn+2])**2)**.5
+                factor = k*(root-e)/root**.5
+                grad[3*i] += factor*(x[3*i]-xs[cn])
+                grad[3*i+1] += factor*(x[3*i+1]-xs[cn+1])
+                grad[3*i+2] += factor*(x[3*i+2]-xs[cn+2])
+
+    return grad
+
+
 def minimize_energy(lattice, d=1, k=2):
     func = energy_func
     r = list_of_coordinates(lattice)
@@ -235,6 +280,15 @@ def minimize_energy(lattice, d=1, k=2):
     A = adjacency_matrix(lattice)
 
     return opt.minimize(func, x0, args=(r[3], A[0], r[0], r[2], A[1], lattice, d, k))
+
+
+def minimize_energy_opt(lattice, d=1, k=2):
+    r = list_of_coordinates(lattice)
+    A = adjacency_matrix(lattice)
+    preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
+
+    return opt.minimize(energy_func_opt, r[1], jac=energy_func_jac, args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                                     lattice, preps[4], np.add(A[0], A[1]), d, k), tol=1.e-07)
 
 
 def assemble_result(result, fixed_values):
@@ -276,7 +330,7 @@ def run(dim, d=1, k=2, stretch_factor=5, plot=True):
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice(l, d, dim, ls[1], stretch_factor)
-    res = minimize_energy(l, d, k)
+    res = minimize_energy_opt(l, d, k)
 
     if plot:
         assemble_result(res.x, list_of_coordinates(l)[0])
@@ -288,7 +342,7 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True):
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
-    res = minimize_energy(l, d, k)
+    res = minimize_energy_opt(l, d, k)
 
     if plot:
         assemble_result(res.x, list_of_coordinates(l)[0])
@@ -297,4 +351,20 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True):
 
 
 if __name__ == '__main__':
-    run_absolute_displacement(5, 1)
+    for i in range(3, 21):
+        d=1
+        k=2
+        ls = create_lattice(i, d)
+        lattice = ls[0]
+        lattice = manipulate_lattice_absolute_value(lattice, ls[1], 1)
+        r = list_of_coordinates(lattice)
+        A = adjacency_matrix(lattice)
+        preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
+
+        res = energy_func_opt(r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                  lattice, preps[4], np.add(A[0], A[1]), d, k)
+        print(res)
+
+
+
+
