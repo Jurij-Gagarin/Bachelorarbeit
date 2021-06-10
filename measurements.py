@@ -1,3 +1,5 @@
+# In this module we perform our simulations.
+
 import hexagonal_lattice as hl
 import time
 import numpy as np
@@ -118,7 +120,7 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
 
         plt.plot(x, x4(x, pars[0]), label=f'fit dim={dims[i]} with a*x^4, a={round(pars[0],4)}, R^2={r2}')
     plt.legend()
-    plt.xlabel('dim')
+    plt.xlabel('\u03B4')
     plt.ylabel('minimale Energie')
     plt.show()
 
@@ -134,7 +136,7 @@ def energy_convergence(min_dim, max_dim, dv):
     plt.show()
 
 
-#dims = [3, 5]
-#plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 10, 20), dims)
+dims = [3, 5]
+plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 10, 20), dims)
 
 
