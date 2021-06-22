@@ -7,6 +7,7 @@ import numpy as np
 import hexagonal_lattice as hl
 from matplotlib.patches import FancyArrowPatch
 from scipy.interpolate import interp1d
+from math import floor, log10
 
 
 class Arrow3D(FancyArrowPatch):
@@ -127,7 +128,8 @@ def plot_graph(dim, stretch_factor=1, displace_value=1, factor=False, d=1, k=2, 
 def contour_coords(dim, displace_value, tol=.1):
     lattice = hl.create_lattice(dim)
     l = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], displace_value=displace_value)
-    values = hl.assemble_result(hl.run_absolute_displacement(dim, displace_value, plot=False).x, hl.list_of_coordinates(l)[0], plot=False)
+    res = hl.run_absolute_displacement(dim, displace_value, plot=False)
+    values = hl.assemble_result(res.x, hl.list_of_coordinates(l)[0], plot=False)
     x=[]
     z=[]
 
@@ -136,21 +138,30 @@ def contour_coords(dim, displace_value, tol=.1):
             x.append(values[0][i])
             z.append(values[2][i])
 
-    return x, z
+    return x, z, res.fun
 
 
-def fit_contour(min_dim, max_dim):
+def round_sig(x, sig=2):
+    return round(x, sig-int(floor(log10(abs(x))))-1)
+
+
+def fit_contour(min_dim, max_dim, disp_value):
+    print(f'max dim = {max_dim}')
     for i in range(min_dim, max_dim+1):
+        if i % 2 == 0:
+            print(f'working on dim = {i}')
+            coords = contour_coords(i, disp_value)
+            plt.plot(coords[0], coords[1], marker='o', linestyle='None', c='blue', markersize=1)
 
-        coords = contour_coords(i, .1)
-        plt.plot(coords[0], coords[1], marker='o', linestyle='None')
+            m1 = max(coords[0])
+            m2 = min(coords[0])
+            x_new = np.linspace(m2, m1, num=1000, endpoint=True)
+            f2 = interp1d(coords[0], coords[1])
 
-        m = max(coords[0])
-        x_new = np.linspace(-m, m, num=50, endpoint=True)
-        f2 = interp1d(coords[0], coords[1])
-
-        plt.plot(x_new, f2(x_new))
+            plt.plot(x_new, f2(x_new), label=f'dim = {i}, E={round_sig(coords[2])}')
+    plt.ylabel('z-Achse')
+    plt.xlabel('x-Achse')
+    plt.legend()
     plt.show()
 
 
-fit_contour(8, 10)
