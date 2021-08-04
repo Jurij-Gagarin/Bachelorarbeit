@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
+import argparse
 from scipy.optimize import curve_fit
 from math import sqrt
 from networksx_tests import round_sig
@@ -137,18 +138,19 @@ def energy_convergence(min_dim, max_dim, dv, method='CG', gtol=1.e-06):
     plt.plot(x, y, label=f'{gtol}')
 
 
-# 'CG', 'BFGS', 'Newton-CG', 'L-BFGS-B', 'TNC', 'SLSQP'
-# 'trust-ncg', 'trust-krylov', 'trust-exact'
-# 'Newton-CG'
+    # 'CG', 'BFGS', 'Newton-CG', 'L-BFGS-B', 'TNC', 'SLSQP'
+    # 'trust-ncg', 'trust-krylov', 'trust-exact'
+    # 'Newton-CG'
 
-# energy_convergence(5, 22, .5, gtol=1.e-08)
-# energy_convergence(5, 22, .5, gtol=1.e-05)
-# plt.legend()
-# plt.show()
+    # energy_convergence(5, 22, .5, gtol=1.e-08)
+    # energy_convergence(5, 22, .5, gtol=1.e-05)
+    # plt.legend()
+    # plt.show()
 
 
 def export_pickle(dim, dv, gtol=1.e-10):
-    path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim={dim}_dv={dv}_gtol={gtol}.pickle'
+    # path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim={dim}_dv={dv}_gtol={gtol}.pickle'
+    path = f'dim={dim}_dv={dv}_gtol={gtol}.pickle'
     result = hl.run_absolute_displacement(dim, dv, plot=False, gtol=gtol)
     pickle_out = open(path, 'wb')
     pickle.dump(result, pickle_out)
@@ -161,9 +163,11 @@ def import_pickle(dim, dv, gtol=1.e-10):
     return pickle.load(pickle_in)
 
 
-for i in range(11, 50):
-    export_pickle(i, 0.1)
-    print(f'pickle with dim={i} and dv=.1 successfully exported')
-
-
-# ssh jurijrudos99@twoheaded.physik.fu-berlin.de
+parser = argparse.ArgumentParser(description='Calculates the energy of a displaced honeycomb lattice and exports this'
+                                             ' as a pickle')
+parser.add_argument('-dim', type=int, help='Variable that describes the size of the lattice')
+parser.add_argument('-dv', type=float, help='displacement value')
+args = parser.parse_args()
+if __name__ == '__main__':
+    export_pickle(args.dim, args.dv)
+    print(f'pickle with dim={args.dim} and dv={args.dv} successfully exported')
