@@ -5,7 +5,10 @@ import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import pickle
 from scipy.optimize import curve_fit
+from math import sqrt
+from networksx_tests import round_sig
 
 
 def measure_time(n0, n_max, digit=2):
@@ -83,7 +86,6 @@ def plot_from_csv(path, fit=False):
     plt.legend()
     plt.grid()
     plt.show()
-    # path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim=9_min=0_max=40_19:23:44.csv'
 
 
 def absolute_stretching(dim, displace_value, d=1, k=2):
@@ -112,31 +114,56 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
     ys = values[1]
 
     for i in range(0, len(ys)):
-        plt.plot(x, ys[i], label=f'dim={dims[i]}', marker='o')
+        plt.plot(x, ys[i], label=f'dim={dims[i]}', marker='o', linestyle='none')
         pars, cov = curve_fit(x4, x, ys[i])
         ss_res = np.sum((ys[i] - x4(x, pars[0]))**2)
         ss_tot = np.sum((ys[i]-np.mean(ys[i]))**2)
         r2 = round(1 - (ss_res / ss_tot), 2)
 
-        plt.plot(x, x4(x, pars[0]), label=f'fit dim={dims[i]} with a*x^4, a={round(pars[0],4)}, R^2={r2}')
+        plt.plot(x, x4(x, pars[0]), label=f'fit dim={dims[i]} with a*x^4, a={round_sig(pars[0])}, error of a={round_sig(sqrt(cov), 1)}')
     plt.legend()
     plt.xlabel('\u03B4')
     plt.ylabel('minimale Energie')
     plt.show()
 
 
-def energy_convergence(min_dim, max_dim, dv):
+def energy_convergence(min_dim, max_dim, dv, method='CG', gtol=1.e-06):
     x = list(range(min_dim, max_dim+1))
     y = np.zeros(max_dim - min_dim+1)
     for i in x:
-        y[i-min_dim] = hl.run_absolute_displacement(i, dv, plot=False).fun
+        y[i-min_dim] = hl.run_absolute_displacement(i, dv, plot=False, method=method, gtol=gtol).fun
         print(f'current dim={i}')
 
-    plt.plot(x, y)
-    plt.show()
+    plt.plot(x, y, label=f'{gtol}')
 
 
-dims = [3, 5]
-plot_multiple_absolute_stretching(absolute_stretching_multi_lattice(dims, 10, 20), dims)
+# 'CG', 'BFGS', 'Newton-CG', 'L-BFGS-B', 'TNC', 'SLSQP'
+# 'trust-ncg', 'trust-krylov', 'trust-exact'
+# 'Newton-CG'
+
+# energy_convergence(5, 22, .5, gtol=1.e-08)
+# energy_convergence(5, 22, .5, gtol=1.e-05)
+# plt.legend()
+# plt.show()
 
 
+def export_pickle(dim, dv, gtol=1.e-10):
+    path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim={dim}_dv={dv}_gtol={gtol}.pickle'
+    result = hl.run_absolute_displacement(dim, dv, plot=False, gtol=gtol)
+    pickle_out = open(path, 'wb')
+    pickle.dump(result, pickle_out)
+    pickle_out.close()
+
+
+def import_pickle(dim, dv, gtol=1.e-10):
+    path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim={dim}_dv={dv}_gtol={gtol}.pickle'
+    pickle_in = open(path, 'rb')
+    return pickle.load(pickle_in)
+
+
+for i in range(11, 50):
+    export_pickle(i, 0.1)
+    print(f'pickle with dim={i} and dv=.1 successfully exported')
+
+
+# ssh jurijrudos99@twoheaded.physik.fu-berlin.de

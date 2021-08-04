@@ -30,12 +30,12 @@ def generate_initial_plot_positions(lattice):
     return pos
 
 
-def generate_manipulated_plot_positions(dim, lattice, stretch_factor=1, displace_value=1, factor=False, d=1, k=2):
+def generate_manipulated_plot_positions(dim, lattice, r2=1, displace_value=1, factor=False, d=1, k=2, method='CG'):
     pos = {}
     if factor:
-        list_mobile_coords = hl.run(dim, stretch_factor=stretch_factor, plot=False, d=d, k=k).x
+        list_mobile_coords = hl.run_sphere(dim, r2, plot=False).x
     else:
-        list_mobile_coords = hl.run_absolute_displacement(dim, displace_value, plot=False, d=d, k=k).x
+        list_mobile_coords = hl.run_absolute_displacement(dim, displace_value, plot=False, d=d, k=k, method=method).x
 
     for i in range(0, len(lattice)):
         if lattice[i].return_mobility():
@@ -112,7 +112,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False):
     plt.show()
 
 
-def plot_graph(dim, stretch_factor=1, displace_value=1, factor=False, d=1, k=2, nodes=False):
+def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG'):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
@@ -120,9 +120,9 @@ def plot_graph(dim, stretch_factor=1, displace_value=1, factor=False, d=1, k=2, 
     A = np.add(matrices[0], matrices[1])
 
     draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l,
-                                                                  stretch_factor=stretch_factor,
+                                                                  r2=r2,
                                                                   displace_value=displace_value, factor=factor,
-                                                                  d=d, k=k), l, nodes=nodes)
+                                                                  d=d, k=k, method=method), l, nodes=nodes)
 
 
 def contour_coords(dim, displace_value, tol=.1):
@@ -165,3 +165,4 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
+# fit_contour(10, 24, .1)
