@@ -8,6 +8,7 @@ import hexagonal_lattice as hl
 from matplotlib.patches import FancyArrowPatch
 from scipy.interpolate import interp1d
 from math import floor, log10
+import pickle
 
 
 class Arrow3D(FancyArrowPatch):
@@ -125,10 +126,16 @@ def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False,
                                                                   d=d, k=k, method=method), l, nodes=nodes)
 
 
+def import_pickle(dim, dv, gtol=1.e-10):
+    path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim={dim}_dv={dv}_gtol={gtol}.pickle'
+    pickle_in = open(path, 'rb')
+    return pickle.load(pickle_in)
+
+
 def contour_coords(dim, displace_value, tol=.1):
     lattice = hl.create_lattice(dim)
     l = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], displace_value=displace_value)
-    res = hl.run_absolute_displacement(dim, displace_value, plot=False)
+    res = import_pickle(dim, displace_value)
     values = hl.assemble_result(res.x, hl.list_of_coordinates(l)[0], plot=False)
     x=[]
     z=[]
@@ -161,8 +168,8 @@ def fit_contour(min_dim, max_dim, disp_value):
             plt.plot(x_new, f2(x_new), label=f'dim = {i}, E={round_sig(coords[2])}')
     plt.ylabel('z-Achse')
     plt.xlabel('x-Achse')
-    plt.legend()
+    # plt.legend()
     plt.show()
 
 
-# fit_contour(10, 24, .1)
+
