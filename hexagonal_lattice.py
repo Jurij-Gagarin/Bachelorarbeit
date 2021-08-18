@@ -211,6 +211,18 @@ def adjacency_matrix(lattice, plot=False):
     return A, As
 
 
+def dilute_lattice(adjacency_matrix, percentile):
+    A = np.triu(adjacency_matrix[0])
+    rows, cols = np.where(A == 1)
+    dil = round(len(rows) * percentile / 100)
+    dilution = rn.sample(list(range(len(rows))), dil)
+
+    for i in dilution:
+        A[rows[i]][cols[i]] = 0
+
+    return A + np.transpose(A), adjacency_matrix[1]
+
+
 def list_of_coordinates(lattice):
     '''
     Takes coordinates from the lattice and sorts them in two np-arrays. One for mobile coordinates and one
@@ -302,10 +314,12 @@ def constraint_sphere(x, r2):
     return constraint
 
 
-def minimize_energy_opt(lattice, d=1, k=2, method='CG', gtol=1.e-10):
+def minimize_energy_opt(lattice, d=1, k=2, method='CG', gtol=1.e-10, percentile=0):
     # Structures the act of energy minimization.
     r = list_of_coordinates(lattice)
-    A = adjacency_matrix(lattice)
+    A = dilute_lattice(adjacency_matrix(lattice), percentile)
+    plt.imshow(A[0] + A[1])
+    plt.plot()
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
 
     return opt.minimize(energy_func_opt, r[1], method=method, jac=energy_func_jac, args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
@@ -376,11 +390,11 @@ def run(dim, d=1, k=2, stretch_factor=5, plot=True):
     return res
 
 
-def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True, method='CG', gtol=1.e-10):
+def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True, method='CG', gtol=1.e-7, percentile=0):
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
-    res = minimize_energy_opt(l, d, k, method=method, gtol=gtol)
+    res = minimize_energy_opt(l, d, k, method=method, gtol=gtol, percentile=percentile)
 
     if plot:
         assemble_result(res.x, list_of_coordinates(l)[0])
@@ -403,6 +417,8 @@ if __name__ == '__main__':
     dim = 10
     displace_value = .5
 
+    print(run_absolute_displacement(15, 3, percentile=5, plot=False))
+
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 
     plot to True. If you are not interest in the entire minimization message, you can print res.x for 
@@ -411,11 +427,7 @@ if __name__ == '__main__':
     # res = run_absolute_displacement(dim, displace_value, plot=False)
     # print(res)
 
-    res = []
-    for dim in [5, 10, 15, 20]:
-        for i in range(5, 11):
-            res.append(run_absolute_displacement(dim, displace_value, plot=False, gtol=10**(-i)))
-            print(f'dim={dim}, gtol: e-{i}:', res[-1].fun, res[-1].success)
+
 
 
 
