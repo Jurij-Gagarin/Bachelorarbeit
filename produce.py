@@ -4,7 +4,7 @@ import argparse
 
 
 def export_pickle(dim, dv, gtol=1.e-10, percentile=0):
-    path = f'dim={dim}_dv={dv}_gtol={gtol}_perc={percentile}.pickle'
+    path = f'./current_measurements/dim={dim}_dv={dv}_gtol={gtol}_perc={percentile}.pickle'
     result = hl.run_absolute_displacement(dim, dv, plot=False, gtol=gtol, percentile=percentile)
     pickle_out = open(path, 'wb')
     pickle.dump(result, pickle_out)
