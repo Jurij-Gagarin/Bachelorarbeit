@@ -21,7 +21,8 @@ parser.add_argument('--gtol', type=float,
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    export_pickle(args.dim, args.dv, percentile=args.p)
     if args.gtol is not None:
         export_pickle(args.dim, args.dv, args.gtol, args.p)
-    print(f'pickle with dim={args.dim}, dv={args.dv} and dilution={args.p} successfully exported')
+    elif args.gtol is None:
+        export_pickle(args.dim, args.dv, percentile=args.p)
+    print(f'pickle with dim={args.dim}, dv={args.dv}, gtol={args.gtol} and dilution={args.p} successfully exported')
