@@ -172,5 +172,5 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-plot_graph(15, displace_value=3, percentile=5)
+# plot_graph(20, displace_value=0.5, percentile=5)
 
