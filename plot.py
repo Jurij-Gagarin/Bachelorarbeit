@@ -126,7 +126,8 @@ def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False,
     draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l,
                                                                   r2=r2,
                                                                   displace_value=displace_value, factor=factor,
-                                                                  d=d, k=k, method=method, percentile=percentile, opt=opt, tol=tol),
+                                                                  d=d, k=k, method=method, percentile=percentile,
+                                                                  opt=opt, tol=tol),
                        l, nodes=nodes)
 
 
@@ -176,4 +177,4 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-plot_graph(15, displace_value=.01, percentile=25)
+plot_graph(25, displace_value=0, percentile=15)

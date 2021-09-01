@@ -57,7 +57,7 @@ def create_lattice(dim, d=1):
     # dim is the maximal summed factor for the lattice vectors
     lattice = []
     box_length = d * dim
-    next = False
+    skip = False
 
     for k in range(0, 2):
         for i in range(-dim, dim + 1):
@@ -68,12 +68,12 @@ def create_lattice(dim, d=1):
                     y = lattice[-1].return_coordinates()[1]
                     if (abs(i) + abs(j)) == dim:
                         lattice[-1] = lattice[-1].change_mobility(False)
-                    if next:
+                    if skip:
                         lattice[-1] = lattice[-1].change_mobility(False)
-                        next = False
+                        skip = False
                     if (abs(x) > box_length / 2) or (abs(y) > box_length / 2):
                         lattice.pop(-1)
-                        next = True
+                        skip = True
                         if len(lattice) > 0:
                             lattice[-1] = lattice[-1].change_mobility(False)
                     if (j == 0) and (i == 0) and (k == 0):
@@ -213,6 +213,7 @@ def adjacency_matrix(lattice, plot=False):
 
 def dilute_lattice(adjacency_matrix, percentile):
     A = np.triu(adjacency_matrix[0])
+    As = np.triu(adjacency_matrix[1])
     rows, cols = np.where(A == 1)
     dil = round(len(rows) * percentile / 100)
     dilution = rn.sample(list(range(len(rows))), dil)
@@ -220,7 +221,23 @@ def dilute_lattice(adjacency_matrix, percentile):
     for i in dilution:
         A[rows[i]][cols[i]] = 0
 
-    return A + np.transpose(A), adjacency_matrix[1]
+    # delete all springs with only one connection
+    s = len(A[0])
+    changes = True
+    while changes:
+        changes = False
+        single_rows = np.where(np.sum(np.add(A, As), 1) == 1)[0]
+        single_cols = np.where(np.sum(np.add(A, As), 0) == 1)[0]
+        if len(single_rows) > 0 or len(single_cols) > 0:
+            changes = True
+            for i in single_rows:
+                A[i] = np.zeros(s)
+                As[i] = np.zeros(s)
+            for i in single_cols:
+                A[:, i] = np.zeros(s)
+                As[:, i] = np.zeros(s)
+
+    return A + np.transpose(A), As + np.transpose(As)
 
 
 def list_of_coordinates(lattice):
@@ -249,7 +266,7 @@ def list_of_coordinates(lattice):
 def manipulate_x0(x0):
     x0_m = np.zeros(len(x0))
     for i in range(len(x0)):
-        x0_m[i] = rn.randint(-100, 100)/1000
+        x0_m[i] = rn.randint(-100, 100) / 1000
     return x0_m
 
 
@@ -333,17 +350,19 @@ def minimize_energy_opt(lattice, method, tol, percentile, d, k, option, x0, A):
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
 
     if x0 is None:
-        min = opt.minimize(energy_func_opt, r[1], method=method, jac=energy_func_jac, tol=tol,
-                           args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
-                                 lattice, preps[4], np.add(A[0], A[1]), d, k),
-                           options=option)
+        minimum = opt.minimize(energy_func_opt, r[1], method=method, jac=energy_func_jac, tol=tol,
+                               args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                     lattice, preps[4], np.add(A[0], A[1]), d, k),
+                               options=option)
     else:
-        min = opt.minimize(energy_func_opt, x0, method=method, jac=energy_func_jac, tol=tol,
-                           args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
-                                 lattice, preps[4], np.add(A[0], A[1]), d, k),
-                           options=option)
+        minimum = opt.minimize(energy_func_opt, x0, method=method, jac=energy_func_jac, tol=tol,
+                               args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                     lattice, preps[4], np.add(A[0], A[1]), d, k),
+                               options=option)
 
-    return min
+    print(energy_func_opt(minimum.x, r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                     lattice, preps[4], np.add(A[0], A[1]), d, k))
+    return minimum
 
 
 def minimize_energy_sphere(lattice, r2, d=1, k=2):
@@ -422,11 +441,12 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
 
     if true_convergence and res.success:
         # makes only sense if percentile=0
-        j=1
-        res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol/10**j, percentile=percentile, option=opt,
+        j = 1
+        res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, percentile=percentile,
+                                   option=opt,
                                    x0=res.x, A=A)
         print(res2.fun, res2.message)
-        while abs(1-res2.fun/res.fun) > .01:
+        while abs(1 - res2.fun / res.fun) > .01:
             print(j)
             if not res2.success:
                 print('Minimization failed, try to increase k')
@@ -434,7 +454,7 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
                 break
             j += 1
             res = res2
-            res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol/10**j, percentile=percentile,
+            res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, percentile=percentile,
                                        option=opt, x0=res.x, A=A)
             print(res2.fun, res2.message)
         res = res2
@@ -457,9 +477,8 @@ def run_sphere(dim, r2, d=1, k=2, plot=True):
 
 if __name__ == '__main__':
     # In here you can run this module
-    # print(run_absolute_displacement(22, 3, true_convergence=True).fun)
-    print(run_absolute_displacement(15, 1, percentile=1, k=2).message)
-
+    res = run_absolute_displacement(15, 2, percentile=5)
+    print(res)
 
 
     '''
