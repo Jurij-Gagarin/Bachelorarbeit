@@ -160,3 +160,13 @@ def import_pickle(dim, dv, gtol=1.e-10, perc=0):
     path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim={dim}_dv={dv}_gtol={gtol}_perc={perc}.pickle'
     pickle_in = open(path, 'rb')
     return pickle.load(pickle_in)
+
+
+start = time.time()
+print(hl.run_absolute_displacement(25, 3).fun)
+print(time.time()-start)
+
+start = time.time()
+print(hl.run_absolute_displacement(25, 3, true_convergence=False, tol=1.e-06).fun)
+print(time.time()-start)
+

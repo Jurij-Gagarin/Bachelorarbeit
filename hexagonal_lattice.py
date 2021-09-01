@@ -18,8 +18,8 @@ class Node:
     movable = True
 
     def __init__(self, n1, n2, d, b, z=0):
-        self.x = n1*d/2 - n2*d/2
-        self.y = (n1 + n2)*math.sqrt(3)*d/2 - b*d/math.sqrt(3)
+        self.x = n1 * d / 2 - n2 * d / 2
+        self.y = (n1 + n2) * math.sqrt(3) * d / 2 - b * d / math.sqrt(3)
         self.z = z
         self.name = [n1, n2, b]
 
@@ -56,7 +56,7 @@ def create_lattice(dim, d=1):
     # d is distance between two nodes on the x-axis
     # dim is the maximal summed factor for the lattice vectors
     lattice = []
-    box_length = d*dim
+    box_length = d * dim
     next = False
 
     for k in range(0, 2):
@@ -71,13 +71,13 @@ def create_lattice(dim, d=1):
                     if next:
                         lattice[-1] = lattice[-1].change_mobility(False)
                         next = False
-                    if (abs(x) > box_length/2) or (abs(y) > box_length/2):
+                    if (abs(x) > box_length / 2) or (abs(y) > box_length / 2):
                         lattice.pop(-1)
                         next = True
                         if len(lattice) > 0:
                             lattice[-1] = lattice[-1].change_mobility(False)
                     if (j == 0) and (i == 0) and (k == 0):
-                        mid_point = len(lattice)-1
+                        mid_point = len(lattice) - 1
 
     return lattice, mid_point
 
@@ -86,7 +86,7 @@ def create_lattice_sphere(dim, r2, d=1):
     # d is distance between two nodes on the x-axis
     # dim is the maximal summed factor for the lattice vectors
     lattice = []
-    box_length = d*dim
+    box_length = d * dim
     next = False
     r = math.sqrt(r2)
 
@@ -102,13 +102,13 @@ def create_lattice_sphere(dim, r2, d=1):
                     if next:
                         lattice[-1] = lattice[-1].change_mobility(False)
                         next = False
-                    if (abs(x) > box_length/2) or (abs(y) > box_length/2):
+                    if (abs(x) > box_length / 2) or (abs(y) > box_length / 2):
                         lattice.pop(-1)
                         next = True
                         if len(lattice) > 0:
                             lattice[-1] = lattice[-1].change_mobility(False)
-                    elif x**2 + y**2 < r2:
-                        lattice[-1] = lattice[-1].change_coordinates([0, 0, -math.sqrt(r2-x**2-y**2)])
+                    elif x ** 2 + y ** 2 < r2:
+                        lattice[-1] = lattice[-1].change_coordinates([0, 0, -math.sqrt(r2 - x ** 2 - y ** 2)])
 
     return [lattice, None]
 
@@ -117,7 +117,7 @@ def manipulate_lattice_random(lattice, n=1):
     # changes z-component from n random nodes
     for k in range(0, n):
         i = rn.randint(0, len(lattice) - 1)
-        j = rn.randint(0, 10)/1
+        j = rn.randint(0, 10) / 1
         lattice[i] = lattice[i].change_coordinates([0, 0, j])
         lattice[i] = lattice[i].change_mobility(False)
 
@@ -126,7 +126,7 @@ def manipulate_lattice_random(lattice, n=1):
 
 def manipulate_lattice(lattice, d, dim, point, stretch_factor=5):
     # stretch with factor = 1: 1% of lattice length
-    j = stretch_factor*d*dim/100
+    j = stretch_factor * d * dim / 100
     lattice[point] = lattice[point].change_coordinates([0, 0, j])
     lattice[point] = lattice[point].change_mobility(False)
 
@@ -187,16 +187,16 @@ def adjacency_matrix(lattice, plot=False):
             mobilityj = lattice[j].return_mobility()
             if nz[2] != ns[2]:
                 if ns[2] == 0 and ((nz[1] == ns[1] and nz[0] == ns[0]) or
-                                   (nz[1] == ns[1] and nz[0] == ns[0]+1) or
-                                   (nz[1] == ns[1]+1 and nz[0] == ns[0])):
+                                   (nz[1] == ns[1] and nz[0] == ns[0] + 1) or
+                                   (nz[1] == ns[1] + 1 and nz[0] == ns[0])):
                     if mobilityi is True and mobilityj is True:
                         A[i][j] = 1
                     else:
                         As[i][j] = 1
 
-                if ns[2] == 1 and((nz[1] == ns[1] and nz[0] == ns[0]) or
-                                  (nz[1] == ns[1] and nz[0] == ns[0]-1) or
-                                  (nz[1] == ns[1]-1 and nz[0] == ns[0])):
+                if ns[2] == 1 and ((nz[1] == ns[1] and nz[0] == ns[0]) or
+                                   (nz[1] == ns[1] and nz[0] == ns[0] - 1) or
+                                   (nz[1] == ns[1] - 1 and nz[0] == ns[0])):
                     if mobilityi is True and mobilityj is True:
                         A[i][j] = 1
                     else:
@@ -237,13 +237,20 @@ def list_of_coordinates(lattice):
         r = lattice[i]
         if r.return_mobility():
             list_of_mobile_coords = np.append(list_of_mobile_coords, r.return_coordinates())
-            mobile_dict[i] = len(list_of_mobile_coords)-3
+            mobile_dict[i] = len(list_of_mobile_coords) - 3
 
         else:
             list_of_immobile_coords = np.append(list_of_immobile_coords, r.return_coordinates())
             immobile_dict[i] = len(list_of_immobile_coords) - 3
 
     return list_of_immobile_coords, list_of_mobile_coords, immobile_dict, mobile_dict
+
+
+def manipulate_x0(x0):
+    x0_m = np.zeros(len(x0))
+    for i in range(len(x0)):
+        x0_m[i] = rn.randint(-100, 100)/1000
+    return x0_m
 
 
 def energy_func_prep(A, As, d):
@@ -261,17 +268,21 @@ def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice,
     for i in range(len(mrows)):
         rpos = xdict[mrows[i]]
         cpos = xdict[mcols[i]]
-        total_energy += (math.sqrt((x[rpos]-x[cpos])**2+(x[rpos+1]-x[cpos+1])**2+(x[rpos+2]-x[cpos+2])**2) - e)**2
+        total_energy += (((x[rpos] - x[cpos]) ** 2 + (x[rpos + 1] - x[cpos + 1]) ** 2 + (
+                x[rpos + 2] - x[cpos + 2]) ** 2) ** .5 - e) ** 2
 
     for i in range(len(imrows)):
         if (lattice[imrows[i]].return_mobility() is True) and (lattice[imcols[i]].return_mobility() is False):
             rpos = xdict[imrows[i]]
             cpos = xsdict[imcols[i]]
-            total_energy += (math.sqrt((x[rpos]-xs[cpos])**2+(x[rpos+1]-xs[cpos+1])**2+(x[rpos+2]-xs[cpos+2])**2)-e)**2
+            total_energy += (((x[rpos] - xs[cpos]) ** 2 + (x[rpos + 1] - xs[cpos + 1]) ** 2 + (
+                    x[rpos + 2] - xs[cpos + 2]) ** 2) ** .5 - e) ** 2
+
         elif (lattice[imrows[i]].return_mobility() is False) and (lattice[imcols[i]].return_mobility() is True):
             rpos = xsdict[imrows[i]]
             cpos = xdict[imcols[i]]
-            total_energy += (math.sqrt((xs[rpos]-x[cpos])**2+(xs[rpos+1]-x[cpos+1])**2+(xs[rpos+2]-x[cpos+2])**2)-e)**2
+            total_energy += (((xs[rpos] - x[cpos]) ** 2 + (xs[rpos + 1] - x[cpos + 1]) ** 2 + (
+                    xs[rpos + 2] - x[cpos + 2]) ** 2) ** .5 - e) ** 2
 
     return .5 * k * total_energy
 
@@ -283,47 +294,56 @@ def energy_func_jac(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice,
 
     # Key is the number of x-coord in x. Gives corresponding particle in adjacency matrix
     xdict_reverse = {v: k for k, v in xdict.items()}
-    for i in range(int(len_x/3)):
-        index = np.where(A[xdict_reverse[3*i]] == 1)[0]
+    for i in range(int(len_x / 3)):
+        index = np.where(A[xdict_reverse[3 * i]] == 1)[0]
         for j in range(len(index)):
             # cn = corresponding_node
             if lattice[index[j]].return_mobility():
                 cn = xdict[index[j]]
-                root = ((x[3*i]-x[cn])**2+(x[3*i+1]-x[cn+1])**2+(x[3*i+2]-x[cn+2])**2)**.5
-                factor = k*(root-e)/root**.5
-                grad[3*i] += factor*(x[3*i]-x[cn])
-                grad[3*i+1] += factor*(x[3*i+1]-x[cn+1])
-                grad[3*i+2] += factor*(x[3*i+2]-x[cn+2])
+                root = ((x[3 * i] - x[cn]) ** 2 + (x[3 * i + 1] - x[cn + 1]) ** 2 + (
+                        x[3 * i + 2] - x[cn + 2]) ** 2) ** .5
+                factor = k * (root - e) / root ** .5
+                grad[3 * i] += factor * (x[3 * i] - x[cn])
+                grad[3 * i + 1] += factor * (x[3 * i + 1] - x[cn + 1])
+                grad[3 * i + 2] += factor * (x[3 * i + 2] - x[cn + 2])
             else:
                 cn = xsdict[index[j]]
-                root = ((x[3*i]-xs[cn])**2+(x[3*i+1]-xs[cn+1])**2+(x[3*i+2]-xs[cn+2])**2)**.5
-                factor = k*(root-e)/root**.5
-                grad[3*i] += factor*(x[3*i]-xs[cn])
-                grad[3*i+1] += factor*(x[3*i+1]-xs[cn+1])
-                grad[3*i+2] += factor*(x[3*i+2]-xs[cn+2])
+                root = ((x[3 * i] - xs[cn]) ** 2 + (x[3 * i + 1] - xs[cn + 1]) ** 2 + (
+                        x[3 * i + 2] - xs[cn + 2]) ** 2) ** .5
+                factor = k * (root - e) / root ** .5
+                grad[3 * i] += factor * (x[3 * i] - xs[cn])
+                grad[3 * i + 1] += factor * (x[3 * i + 1] - xs[cn + 1])
+                grad[3 * i + 2] += factor * (x[3 * i + 2] - xs[cn + 2])
 
     return grad
 
 
 def constraint_sphere(x, r2):
     constraint = []
-    for i in range(0, len(x)-2):
+    for i in range(0, len(x) - 2):
         if i % 3 == 0:
-            constraint.append({'type': 'ineq', 'fun': lambda x: x[i]**2 + x[i+1]**2 + x[i+2]**2 - r2})
+            constraint.append({'type': 'ineq', 'fun': lambda x: x[i] ** 2 + x[i + 1] ** 2 + x[i + 2] ** 2 - r2})
 
     return constraint
 
 
-def minimize_energy_opt(lattice, d=1, k=2, method='CG', gtol=1.e-10, percentile=0):
+def minimize_energy_opt(lattice, method, tol, percentile, d, k, option, x0, A):
     # Structures the act of energy minimization.
     r = list_of_coordinates(lattice)
-    A = dilute_lattice(adjacency_matrix(lattice), percentile)
-    plt.imshow(A[0] + A[1])
-    plt.plot()
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
 
-    return opt.minimize(energy_func_opt, r[1], method=method, jac=energy_func_jac, args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
-                                                     lattice, preps[4], np.add(A[0], A[1]), d, k), tol=0, options={'gtol':gtol})
+    if x0 is None:
+        min = opt.minimize(energy_func_opt, r[1], method=method, jac=energy_func_jac, tol=tol,
+                           args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                 lattice, preps[4], np.add(A[0], A[1]), d, k),
+                           options=option)
+    else:
+        min = opt.minimize(energy_func_opt, x0, method=method, jac=energy_func_jac, tol=tol,
+                           args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
+                                 lattice, preps[4], np.add(A[0], A[1]), d, k),
+                           options=option)
+
+    return min
 
 
 def minimize_energy_sphere(lattice, r2, d=1, k=2):
@@ -390,11 +410,34 @@ def run(dim, d=1, k=2, stretch_factor=5, plot=True):
     return res
 
 
-def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=True, method='CG', gtol=1.e-7, percentile=0):
+def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentile=0,
+                              opt=None, true_convergence=True, x0=None):
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
-    res = minimize_energy_opt(l, d, k, method=method, gtol=gtol, percentile=percentile)
+    A = dilute_lattice(adjacency_matrix(l), percentile)
+    res = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol, percentile=percentile, option=opt, x0=x0, A=A
+                              )
+    print(res.fun, res.message)
+
+    if true_convergence and res.success:
+        # makes only sense if percentile=0
+        j=1
+        res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol/10**j, percentile=percentile, option=opt,
+                                   x0=res.x, A=A)
+        print(res2.fun, res2.message)
+        while abs(1-res2.fun/res.fun) > .01:
+            print(j)
+            if not res2.success:
+                print('Minimization failed, try to increase k')
+                print(res2.message)
+                break
+            j += 1
+            res = res2
+            res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol/10**j, percentile=percentile,
+                                       option=opt, x0=res.x, A=A)
+            print(res2.fun, res2.message)
+        res = res2
 
     if plot:
         assemble_result(res.x, list_of_coordinates(l)[0])
@@ -414,10 +457,10 @@ def run_sphere(dim, r2, d=1, k=2, plot=True):
 
 if __name__ == '__main__':
     # In here you can run this module
-    dim = 10
-    displace_value = .5
+    # print(run_absolute_displacement(22, 3, true_convergence=True).fun)
+    print(run_absolute_displacement(15, 1, percentile=1, k=2).message)
 
-    print(run_absolute_displacement(15, 3, percentile=5, plot=False))
+
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 
@@ -426,12 +469,3 @@ if __name__ == '__main__':
     '''
     # res = run_absolute_displacement(dim, displace_value, plot=False)
     # print(res)
-
-
-
-
-
-
-
-
-
