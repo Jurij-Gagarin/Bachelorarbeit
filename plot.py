@@ -176,6 +176,3 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.xlabel('x-Achse')
     # plt.legend()
     plt.show()
-
-
-plot_graph(15, displace_value=2, percentile=10, k=100)

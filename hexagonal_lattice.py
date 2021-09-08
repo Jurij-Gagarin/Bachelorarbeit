@@ -271,7 +271,7 @@ def energy_func_prep(A, As, d):
     return mrows, mcols, imrows, imcols, e
 
 
-def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, d=1, k=2):
+def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, d=1, k=2):
     # calculates lattice energy (optimized).
     total_energy = 0
 
@@ -297,13 +297,11 @@ def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice,
     return .5 * k * total_energy
 
 
-def energy_func_jac(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, d=1, k=2):
+def energy_func_jac_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, d=1, k=2):
     # Calculates jacobian i.e. the gradient for the energy function. Might be optimized in the future.
     len_x = len(x)
     grad = np.zeros(len_x)
 
-    # Key is the number of x-coord in x. Gives corresponding particle in adjacency matrix
-    xdict_reverse = {v: k for k, v in xdict.items()}
     for i in range(int(len_x / 3)):
         index = np.where(A[xdict_reverse[3 * i]] == 1)[0]
         for j in range(len(index)):
@@ -331,7 +329,8 @@ def minimize_energy_opt(lattice, method, tol, d, k, option, x0, A, jac_func):
     # Structures the act of energy minimization.
     r = list_of_coordinates(lattice)
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
-    args = (r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3], lattice, preps[4], np.add(A[0], A[1]), d, k)
+    args = (r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3], lattice, preps[4], np.add(A[0], A[1]),
+            {v: k for k, v in r[3].items()}, d, k)
 
     if x0 is None:
         minimum = opt.minimize(energy_func_opt, r[1], method=method, jac=jac_func, tol=tol,
@@ -351,8 +350,8 @@ def check_gradient(dim, dv, perc, d=1, k=2):
     r = list_of_coordinates(l)
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
 
-    return opt.check_grad(energy_func_opt, energy_func_jac, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
-                          preps[3], l, preps[4], np.add(A[0], A[1]), d, k)
+    return opt.check_grad(energy_func_opt, energy_func_jac_opt, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
+                          preps[3], l, preps[4], np.add(A[0], A[1]), {v: k for k, v in r[3].items()}, d, k)
 
 
 def assemble_result(result, fixed_values, plot=True):
@@ -382,7 +381,6 @@ def assemble_result(result, fixed_values, plot=True):
 
     # Very basic plot. Might be removed in the future.
     if plot:
-        print('h')
         fig = plt.figure(figsize=(15, 15))
         ax = fig.add_subplot(111, projection='3d')
         # ax.set_xlim([-20, 20])
@@ -397,17 +395,19 @@ def assemble_result(result, fixed_values, plot=True):
 
 
 def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentile=0,
-                              opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac):
+                              opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac_opt):
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
     A = dilute_lattice(adjacency_matrix(l), percentile)
     res = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func)
     # print(res.fun, res.message, f'tol={tol}')
+    j = 0
 
     if true_convergence and res.success:
         # makes only sense if percentile=0
         j = 1
+
         res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x,
                                    A=A, jac_func=jac_func)
         # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
@@ -424,6 +424,8 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
             # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
         res = res2
 
+    print(res.fun, res.message, f'tol={tol / 10 ** j}')
+
     if plot:
         assemble_result(res.x, list_of_coordinates(l)[0])
 
@@ -434,11 +436,7 @@ if __name__ == '__main__':
     # In here you can run this module
     # for i in range(10 + 1): print(i/10, check_gradient(5, i/10, 0))
 
-    for i in range(5, 16): print(check_gradient(i, 1, 0))
-
-    for i in range(5, 16): print(check_gradient(15, i/10, 0))
-
-    for i in range(5, 16): print(check_gradient(15, 1, i-5))
+    print(check_gradient(15, 5, 0))
 
 
     '''

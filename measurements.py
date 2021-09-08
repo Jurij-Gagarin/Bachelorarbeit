@@ -2,6 +2,7 @@
 
 import hexagonal_lattice as hl
 import time
+import timeit
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -26,23 +27,34 @@ def measure_time(n0, n_max, digit=2):
     return times
 
 
-def energy_func_speedtest(dim, num, d=1, k=2):
+def energy_func_speedtest(dim, num, dv, d=1, k=2):
     lattice = hl.create_lattice(dim)
     l = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], 0.3)
     t1 = 0
     t2 = 0
     for i in range(num):
         start_time = time.time()
-        energy1 = hl.minimize_energy(l).fun
+        energy1 = hl.run_absolute_displacement(dim, dv, jac_func=hl.energy_func_jac).fun
         end_time = time.time()
-        t1 += end_time - start_time
+        dt = end_time - start_time
+        print(dt)
+        t1 += dt
 
         start_time = time.time()
-        energy2 = hl.minimize_energy_opt(l).fun
+        energy2 = hl.run_absolute_displacement(dim, dv, jac_func=hl.energy_func_jac_opt).fun
         end_time = time.time()
+        dt = end_time - start_time
+        print(dt)
         t2 += end_time - start_time
 
     return energy1, energy2, t1, t2
+
+
+testcode = '''
+x=np.zeros(2000)
+len_x = len(x)
+'''
+print(timeit.timeit(testcode, setup='import numpy as np', number=10000))
 
 
 def energy_continuous_stretching(dim, max_stretch, min_stretch=0, export=False):
@@ -128,14 +140,15 @@ def plot_multiple_absolute_stretching(values, dims, fit=True):
     plt.show()
 
 
-def energy_convergence(min_dim, max_dim, dv, method='CG', gtol=1.e-06):
+def energy_convergence(min_dim, max_dim, dv, method='CG'):
     x = list(range(min_dim, max_dim+1))
     y = np.zeros(max_dim - min_dim+1)
     for i in x:
-        y[i-min_dim] = hl.run_absolute_displacement(i, dv, plot=False, method=method, gtol=gtol).fun
         print(f'current dim={i}')
+        y[i-min_dim] = hl.run_absolute_displacement(i, dv, method=method, true_convergence=True, percentile=0).fun
 
-    plt.plot(x, y, label=f'{gtol}')
+    plt.scatter(x, y)
+    plt.show()
 
 
     # 'CG', 'BFGS', 'Newton-CG', 'L-BFGS-B', 'TNC', 'SLSQP'
@@ -162,11 +175,4 @@ def import_pickle(dim, dv, gtol=1.e-10, perc=0):
     return pickle.load(pickle_in)
 
 
-start = time.time()
-print(hl.run_absolute_displacement(25, 3).fun)
-print(time.time()-start)
-
-start = time.time()
-print(hl.run_absolute_displacement(25, 3, true_convergence=False, tol=1.e-06).fun)
-print(time.time()-start)
 
