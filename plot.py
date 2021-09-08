@@ -116,7 +116,8 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False):
     plt.show()
 
 
-def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None, tol=1.e-03):
+def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
+               tol=1.e-03):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
@@ -177,4 +178,4 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-plot_graph(25, displace_value=0, percentile=15)
+plot_graph(15, displace_value=2, percentile=10, k=100)

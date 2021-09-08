@@ -263,13 +263,6 @@ def list_of_coordinates(lattice):
     return list_of_immobile_coords, list_of_mobile_coords, immobile_dict, mobile_dict
 
 
-def manipulate_x0(x0):
-    x0_m = np.zeros(len(x0))
-    for i in range(len(x0)):
-        x0_m[i] = rn.randint(-100, 100) / 1000
-    return x0_m
-
-
 def energy_func_prep(A, As, d):
     # This does some basic preparation for the optimized energy function
     mrows, mcols = np.where(A == 1)
@@ -319,7 +312,7 @@ def energy_func_jac(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice,
                 cn = xdict[index[j]]
                 root = ((x[3 * i] - x[cn]) ** 2 + (x[3 * i + 1] - x[cn + 1]) ** 2 + (
                         x[3 * i + 2] - x[cn + 2]) ** 2) ** .5
-                factor = k * (root - e) / root ** .5
+                factor = k * (root - e) / root
                 grad[3 * i] += factor * (x[3 * i] - x[cn])
                 grad[3 * i + 1] += factor * (x[3 * i + 1] - x[cn + 1])
                 grad[3 * i + 2] += factor * (x[3 * i + 2] - x[cn + 2])
@@ -327,53 +320,39 @@ def energy_func_jac(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice,
                 cn = xsdict[index[j]]
                 root = ((x[3 * i] - xs[cn]) ** 2 + (x[3 * i + 1] - xs[cn + 1]) ** 2 + (
                         x[3 * i + 2] - xs[cn + 2]) ** 2) ** .5
-                factor = k * (root - e) / root ** .5
+                factor = k * (root - e) / root
                 grad[3 * i] += factor * (x[3 * i] - xs[cn])
                 grad[3 * i + 1] += factor * (x[3 * i + 1] - xs[cn + 1])
                 grad[3 * i + 2] += factor * (x[3 * i + 2] - xs[cn + 2])
-
     return grad
 
 
-def constraint_sphere(x, r2):
-    constraint = []
-    for i in range(0, len(x) - 2):
-        if i % 3 == 0:
-            constraint.append({'type': 'ineq', 'fun': lambda x: x[i] ** 2 + x[i + 1] ** 2 + x[i + 2] ** 2 - r2})
-
-    return constraint
-
-
-def minimize_energy_opt(lattice, method, tol, percentile, d, k, option, x0, A):
+def minimize_energy_opt(lattice, method, tol, d, k, option, x0, A, jac_func):
     # Structures the act of energy minimization.
     r = list_of_coordinates(lattice)
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
+    args = (r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3], lattice, preps[4], np.add(A[0], A[1]), d, k)
 
     if x0 is None:
-        minimum = opt.minimize(energy_func_opt, r[1], method=method, jac=energy_func_jac, tol=tol,
-                               args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
-                                     lattice, preps[4], np.add(A[0], A[1]), d, k),
-                               options=option)
+        minimum = opt.minimize(energy_func_opt, r[1], method=method, jac=jac_func, tol=tol,
+                               args=args, options=option)
     else:
-        minimum = opt.minimize(energy_func_opt, x0, method=method, jac=energy_func_jac, tol=tol,
-                               args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
-                                     lattice, preps[4], np.add(A[0], A[1]), d, k),
-                               options=option)
+        minimum = opt.minimize(energy_func_opt, x0, method=method, jac=jac_func, tol=tol,
+                               args=args, options=option)
 
-    print(energy_func_opt(minimum.x, r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
-                                     lattice, preps[4], np.add(A[0], A[1]), d, k))
     return minimum
 
 
-def minimize_energy_sphere(lattice, r2, d=1, k=2):
-    r = list_of_coordinates(lattice)
-    A = adjacency_matrix(lattice)
+def check_gradient(dim, dv, perc, d=1, k=2):
+    ls = create_lattice(dim, d)
+    l = ls[0]
+    l = manipulate_lattice_absolute_value(l, ls[1], dv)
+    A = dilute_lattice(adjacency_matrix(l), perc)
+    r = list_of_coordinates(l)
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
-    constraint = constraint_sphere(r[1], r2)
 
-    return opt.minimize(energy_func_opt, r[1], method='SLSQP', jac=energy_func_jac, constraints=constraint,
-                        args=(r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3],
-                              lattice, preps[4], np.add(A[0], A[1]), d, k))
+    return opt.check_grad(energy_func_opt, energy_func_jac, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
+                          preps[3], l, preps[4], np.add(A[0], A[1]), d, k)
 
 
 def assemble_result(result, fixed_values, plot=True):
@@ -417,57 +396,33 @@ def assemble_result(result, fixed_values, plot=True):
     return np.concatenate([x, xf]), np.concatenate([y, yf]), np.concatenate([z, zf])
 
 
-def run(dim, d=1, k=2, stretch_factor=5, plot=True):
-    ls = create_lattice(dim, d)
-    l = ls[0]
-    l = manipulate_lattice(l, d, dim, ls[1], stretch_factor)
-    res = minimize_energy_opt(l, d, k)
-
-    if plot:
-        assemble_result(res.x, list_of_coordinates(l)[0])
-
-    return res
-
-
 def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentile=0,
-                              opt=None, true_convergence=True, x0=None):
+                              opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac):
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
     A = dilute_lattice(adjacency_matrix(l), percentile)
-    res = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol, percentile=percentile, option=opt, x0=x0, A=A
-                              )
-    print(res.fun, res.message)
+    res = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func)
+    # print(res.fun, res.message, f'tol={tol}')
 
     if true_convergence and res.success:
         # makes only sense if percentile=0
         j = 1
-        res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, percentile=percentile,
-                                   option=opt,
-                                   x0=res.x, A=A)
-        print(res2.fun, res2.message)
+        res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x,
+                                   A=A, jac_func=jac_func)
+        # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
         while abs(1 - res2.fun / res.fun) > .01:
-            print(j)
+
             if not res2.success:
-                print('Minimization failed, try to increase k')
+                # print('Minimization failed, try to increase k')
                 print(res2.message)
                 break
             j += 1
             res = res2
-            res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, percentile=percentile,
-                                       option=opt, x0=res.x, A=A)
-            print(res2.fun, res2.message)
+            res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x, A=A,
+                                       jac_func=jac_func)
+            # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
         res = res2
-
-    if plot:
-        assemble_result(res.x, list_of_coordinates(l)[0])
-
-    return res
-
-
-def run_sphere(dim, r2, d=1, k=2, plot=True):
-    l = create_lattice_sphere(dim, r2)[0]
-    res = minimize_energy_sphere(l, r2, d, k)
 
     if plot:
         assemble_result(res.x, list_of_coordinates(l)[0])
@@ -477,8 +432,13 @@ def run_sphere(dim, r2, d=1, k=2, plot=True):
 
 if __name__ == '__main__':
     # In here you can run this module
-    res = run_absolute_displacement(15, 2, percentile=5)
-    print(res)
+    # for i in range(10 + 1): print(i/10, check_gradient(5, i/10, 0))
+
+    for i in range(5, 16): print(check_gradient(i, 1, 0))
+
+    for i in range(5, 16): print(check_gradient(15, i/10, 0))
+
+    for i in range(5, 16): print(check_gradient(15, 1, i-5))
 
 
     '''
