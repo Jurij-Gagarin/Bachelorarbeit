@@ -5,5 +5,4 @@ do
   do
     python3 produce.py -dim $i -dv $j -p 0
   done
-
 done

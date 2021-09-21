@@ -149,10 +149,17 @@ def plot_lattice(lattice):
     xb = []
     yb = []
     zb = []
+    xg = []
+    yg = []
+    zg = []
 
     for i in range(0, len(lattice)):
         node = lattice[i]
-        if node.return_mobility():
+        if i in [233, 17]:
+            xg.append(node.return_coordinates()[0])
+            yg.append(node.return_coordinates()[1])
+            zg.append(node.return_coordinates()[2])
+        elif node.return_mobility():
             x.append(node.return_coordinates()[0])
             y.append(node.return_coordinates()[1])
             z.append(node.return_coordinates()[2])
@@ -169,6 +176,7 @@ def plot_lattice(lattice):
     ax.set_ylabel('y-Achse')
     ax.scatter(x, y, z, c='blue')
     ax.scatter(xb, yb, zb, c='red')
+    ax.scatter(xg, yg, zg, c='green')
     plt.show()
 
 
@@ -354,7 +362,7 @@ def check_gradient(dim, dv, perc, d=1, k=2):
                           preps[3], l, preps[4], np.add(A[0], A[1]), {v: k for k, v in r[3].items()}, d, k)
 
 
-def assemble_result(result, fixed_values, plot=True):
+def assemble_result(result, fixed_values, plot=False):
     # Takes the list of coordinates from the minimized lattice and returns them as vectors.
     x = []
     y = []
@@ -436,7 +444,7 @@ if __name__ == '__main__':
     # In here you can run this module
     # for i in range(10 + 1): print(i/10, check_gradient(5, i/10, 0))
 
-    print(check_gradient(15, 5, 0))
+    run_absolute_displacement(5, 5)
 
 
     '''

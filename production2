@@ -1,0 +1,5 @@
+#!/bin/bash
+for i in {29..50}
+do
+  python3 produce.py -dim $i -dv 7.5 -p 0
+done

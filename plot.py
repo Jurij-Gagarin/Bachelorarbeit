@@ -37,7 +37,8 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r2=1, displace_value=
     if factor:
         list_mobile_coords = hl.run_sphere(dim, r2, plot=False).x
     else:
-        res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt)
+        res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
+                                           , tol=tol)
         list_mobile_coords = res.x
         print(res)
 
@@ -176,3 +177,6 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.xlabel('x-Achse')
     # plt.legend()
     plt.show()
+
+
+#plot_graph(15, displace_value=8, percentile=10)
