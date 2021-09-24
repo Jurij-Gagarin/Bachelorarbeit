@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random as rn
 from scipy import optimize as opt
+import pickle
 
 
 class Node:
@@ -408,6 +409,11 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
     A = dilute_lattice(adjacency_matrix(l), percentile)
+
+    if x0:
+        path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{displace_value}/dim={dim}_dv={displace_value}_perc=0.pickle'
+        x0 = pickle.load(open(path, 'rb')).x
+
     res = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func)
     # print(res.fun, res.message, f'tol={tol}')
     j = 0
@@ -419,7 +425,7 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
         res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x,
                                    A=A, jac_func=jac_func)
         # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
-        while abs(1 - res2.fun / res.fun) > .01:
+        while abs(1 - res2.fun / res.fun) > .001:
 
             if not res2.success:
                 # print('Minimization failed, try to increase k')

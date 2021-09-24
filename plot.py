@@ -32,13 +32,13 @@ def generate_initial_plot_positions(lattice):
 
 
 def generate_manipulated_plot_positions(dim, lattice, opt, r2=1, displace_value=1, factor=False, d=1, k=2, method='CG',
-                                        percentile=0, tol=1.e-06, ):
+                                        percentile=0, tol=1.e-06, x0=None):
     pos = {}
     if factor:
         list_mobile_coords = hl.run_sphere(dim, r2, plot=False).x
     else:
         res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
-                                           , tol=tol)
+                                           , tol=tol, x0=x0)
         list_mobile_coords = res.x
         print(res)
 
@@ -118,7 +118,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False):
 
 
 def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
-               tol=1.e-03):
+               tol=1.e-03, x0=None):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
@@ -129,20 +129,19 @@ def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False,
                                                                   r2=r2,
                                                                   displace_value=displace_value, factor=factor,
                                                                   d=d, k=k, method=method, percentile=percentile,
-                                                                  opt=opt, tol=tol),
+                                                                  opt=opt, tol=tol, x0=x0),
                        l, nodes=nodes)
 
 
-def import_pickle(dim, dv, gtol=1.e-10):
-    path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim={dim}_dv={dv}_gtol={gtol}.pickle'
+def import_pickle(path):
     pickle_in = open(path, 'rb')
     return pickle.load(pickle_in)
 
 
-def contour_coords(dim, displace_value, tol=.1):
+def contour_coords(dim, displace_value, path, tol=.1):
     lattice = hl.create_lattice(dim)
     l = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], displace_value=displace_value)
-    res = import_pickle(dim, displace_value)
+    res = import_pickle(path)
     values = hl.assemble_result(res.x, hl.list_of_coordinates(l)[0], plot=False)
     x = []
     z = []
@@ -161,10 +160,12 @@ def round_sig(x, sig=2):
 
 def fit_contour(min_dim, max_dim, disp_value):
     print(f'max dim = {max_dim}')
+
     for i in range(min_dim, max_dim + 1):
         if i % 2 == 0:
             print(f'working on dim = {i}')
-            coords = contour_coords(i, disp_value)
+            path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{disp_value}/dim={i}_dv={disp_value}_perc=0.pickle'
+            coords = contour_coords(i, disp_value, path=path)
             plt.plot(coords[0], coords[1], marker='o', linestyle='None', c='blue', markersize=1)
 
             m1 = max(coords[0])
@@ -173,10 +174,10 @@ def fit_contour(min_dim, max_dim, disp_value):
             f2 = interp1d(coords[0], coords[1])
 
             plt.plot(x_new, f2(x_new), label=f'dim = {i}, E={round_sig(coords[2])}')
-    plt.ylabel('z-Achse')
-    plt.xlabel('x-Achse')
-    # plt.legend()
+    plt.ylabel('z-Achse', size=16)
+    plt.xlabel('x-Achse', size=16)
+    plt.legend()
+    plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
     plt.show()
 
 
-#plot_graph(15, displace_value=8, percentile=10)

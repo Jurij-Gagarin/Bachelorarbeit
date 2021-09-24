@@ -99,6 +99,32 @@ def plot_histograms(dims, dvs):
     plt.show()
 
 
+def plot_links_mean_value(dims, dvs):
+    means = []
+    links = []
+    for d in dims:
+        paths = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dvs[0]}/dim={d}_dv={dvs[0]}_perc=0.pickle'
+        arr = calculate_distance(d, dvs[0], paths)
+        mean = np.mean(arr)
+        lattice = hl.create_lattice(d, 1)[0]
+        r = hl.list_of_coordinates(lattice)
+        links.append(len(r[0])+len(r[1]))
+        means.append(mean)
+        print(d, dvs[0])
+    plt.plot(links, means, label=f'dv={dvs[0]}')
+
+    dvs.pop(0)
+    if len(dvs) > 0:
+        print(dvs)
+        plot_links_mean_value(dims, dvs)
+
+    plt.legend()
+    plt.xlabel('Number of links', size=16)
+    plt.ylabel('Mean value of all elongations', size=16)
+    plt.title('Mean elongation Value plotted against the number of links', size=20)
+    plt.show()
+
+
 def plot_max_elongation2_vs_energy(dims, dv):
     elong_max2 = []
     energy = []
@@ -116,6 +142,6 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.legend()
     plt.show()
 
-plot_max_elongation2_vs_energy(list(range(5,41)), 5.0)
 
 path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_2.5/dim=49_dv=2.5_perc=0.pickle'
+plot_links_mean_value(list(range(5, 30)), [2.5, 5.0, 7.5, 10.0])
