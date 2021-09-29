@@ -9,6 +9,7 @@ from matplotlib.patches import FancyArrowPatch
 from scipy.interpolate import interp1d
 from math import floor, log10
 import pickle
+from colour import Color
 
 
 class Arrow3D(FancyArrowPatch):
@@ -58,6 +59,8 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False):
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
     G.add_edges_from(edges)
+    blue = Color('blue')
+    colors = list(blue.range_to(Color('red'), 10))
 
     with plt.style.context('classic'):
         fig = plt.figure(figsize=(20, 20))
@@ -103,7 +106,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False):
             z = np.array((pos[j[0]][2], pos[j[1]][2]))
 
             # Plot the connecting lines
-            ax.plot(x, y, z, c='black', alpha=0.5)
+            ax.plot(x, y, z, c=colors[0], alpha=0.5)
 
     # Set the initial view
     # 90
@@ -180,4 +183,4 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
     plt.show()
 
-
+plot_graph(10, displace_value=1)

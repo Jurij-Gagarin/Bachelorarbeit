@@ -115,7 +115,6 @@ def plot_links_mean_value(dims, dvs):
 
     dvs.pop(0)
     if len(dvs) > 0:
-        print(dvs)
         plot_links_mean_value(dims, dvs)
 
     plt.legend()
@@ -144,4 +143,4 @@ def plot_max_elongation2_vs_energy(dims, dv):
 
 
 path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_2.5/dim=49_dv=2.5_perc=0.pickle'
-plot_links_mean_value(list(range(5, 30)), [2.5, 5.0, 7.5, 10.0])
+plot_links_mean_value(list(range(5, 51)), [2.5, 5.0, 7.5, 10.0])
