@@ -4,7 +4,7 @@ import numpy as np
 import plot
 import pickle
 import matplotlib.pyplot as plt
-from math import floor, log10
+from math import floor, log10, sqrt
 
 
 def single_plot_from_pickle(dim, dv, path, gtol=1.e-10, perc=0, d=1):
@@ -26,7 +26,7 @@ def single_plot_from_pickle(dim, dv, path, gtol=1.e-10, perc=0, d=1):
             vector = l[i].return_coordinates()
             pos[i] = (vector[0], vector[1], vector[2])
 
-    plot.draw_initial_graph(A, 22, pos, l)
+    plot.draw_initial_graph(A, 22, pos, l, dist=calculate_distance(dim, dv, path, perc, d), e=d/sqrt(3))
 
 
 def print_convergence(dim, dv, gtol=1.e-10, perc=0):
@@ -142,5 +142,7 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.show()
 
 
-path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_2.5/dim=49_dv=2.5_perc=0.pickle'
-plot_links_mean_value(list(range(5, 51)), [2.5, 5.0, 7.5, 10.0])
+dim = 15
+dv = 10.0
+path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}/dim={dim}_dv={dv}_perc=0.pickle'
+single_plot_from_pickle(dim, dv, path)

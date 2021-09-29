@@ -54,13 +54,23 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r2=1, displace_value=
     return pos
 
 
-def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False):
+def generate_color(dist, max_dist, min_dist, num):
+    interval = np.linspace(min_dist, max_dist, num=num)
+    for i in range(len(interval)):
+        if interval[i] >= dist:
+            return i
+
+
+def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dist=None, num=10, e=0):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
     G.add_edges_from(edges)
-    blue = Color('blue')
-    colors = list(blue.range_to(Color('red'), 10))
+    blue = Color('red')
+    colors = list(blue.range_to(Color('green'), num))
+    k = 0
+    max_dist = max(dist)
+    min_dist = min(dist)
 
     with plt.style.context('classic'):
         fig = plt.figure(figsize=(20, 20))
@@ -96,17 +106,16 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False):
                     ax.add_artist(delta)
                     ax.add_artist(a1)
                     ax.add_artist(a2)
-        # ax.set_zlim3d(0, d*dim/2)
-        # ax.set_xlim3d(-4.5, 4.5)
-        # ax.set_ylim3d(-4.5, 4.5)
 
         for i, j in enumerate(G.edges()):
             x = np.array((pos[j[0]][0], pos[j[1]][0]))
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
             z = np.array((pos[j[0]][2], pos[j[1]][2]))
 
+            dis = ((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5 - e
             # Plot the connecting lines
-            ax.plot(x, y, z, c=colors[0], alpha=0.5)
+            ax.plot(x, y, z, c=str(colors[generate_color(dis, max_dist, min_dist, num)].hex), alpha=1.0)
+            k+=1
 
     # Set the initial view
     # 90
@@ -183,4 +192,3 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
     plt.show()
 
-plot_graph(10, displace_value=1)
