@@ -11,7 +11,7 @@ def single_plot_from_pickle(dim, dv, path, perc=0, d=1, max_dist=None, max_dist_
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=dv)
-    matrices = hl.dilute_lattice(hl.adjacency_matrix(l), perc)
+    matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), perc)
     A = np.add(matrices[0], matrices[1])
     if max_dist is None:
         path2 = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}/dim={max_dist_dim}_dv={dv}_perc=0.pickle'

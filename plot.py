@@ -116,11 +116,11 @@ def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=Fa
 
 
 def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
-               tol=1.e-03, x0=None):
+               tol=1.e-03, x0=None, max_dist=10):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
-    matrices = hl.dilute_lattice(hl.adjacency_matrix(l), percentile)
+    matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile)
     A = np.add(matrices[0], matrices[1])
 
     draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l,
@@ -128,7 +128,7 @@ def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False,
                                                                   displace_value=displace_value, factor=factor,
                                                                   d=d, k=k, method=method, percentile=percentile,
                                                                   opt=opt, tol=tol, x0=x0),
-                       l, nodes=nodes)
+                       l, nodes=nodes, max_dist=max_dist)
 
 
 def import_pickle(path):
@@ -174,3 +174,5 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
     plt.show()
 
+
+plot_graph(20, displace_value=5.0, percentile=20, x0=True)

@@ -6,6 +6,7 @@ import numpy as np
 import random as rn
 from scipy import optimize as opt
 import pickle
+import helpful_functions as hf
 
 
 class Node:
@@ -220,6 +221,38 @@ def adjacency_matrix(lattice, plot=False):
     return A, As
 
 
+def dilute_lattice_point(adjacency_matrix, percentile):
+    A = np.triu(adjacency_matrix[0])
+    As = np.triu(adjacency_matrix[1])
+    if percentile == 0:
+        return A + np.transpose(A), As + np.transpose(As)
+    n = len(A)
+    m = len(A[0])
+
+    rows_to_delete = rn.sample(list(range(n)), int(hf.round_sig(n*percentile/100)))
+    for i in rows_to_delete:
+        A[i] = np.zeros(m)
+        # As[i] = np.zeros(m)
+
+    s = len(A[0])
+    changes = True
+    while changes:
+        changes = False
+        single_rows = np.where(np.sum(np.add(A, As), 1) == 1)[0]
+        single_cols = np.where(np.sum(np.add(A, As), 0) == 1)[0]
+        if len(single_rows) > 0 or len(single_cols) > 0:
+            changes = True
+            for i in single_rows:
+                A[i] = np.zeros(s)
+                As[i] = np.zeros(s)
+            for i in single_cols:
+                A[:, i] = np.zeros(s)
+                As[:, i] = np.zeros(s)
+
+    return A + np.transpose(A), As + np.transpose(As)
+
+
+
 def dilute_lattice(adjacency_matrix, percentile):
     A = np.triu(adjacency_matrix[0])
     As = np.triu(adjacency_matrix[1])
@@ -408,7 +441,7 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
-    A = dilute_lattice(adjacency_matrix(l), percentile)
+    A = dilute_lattice_point(adjacency_matrix(l), percentile)
 
     if x0:
         path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{displace_value}/dim={dim}_dv={displace_value}_perc=0.pickle'
@@ -449,9 +482,6 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
 if __name__ == '__main__':
     # In here you can run this module
     # for i in range(10 + 1): print(i/10, check_gradient(5, i/10, 0))
-
-    run_absolute_displacement(5, 5)
-
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 
