@@ -7,12 +7,15 @@ import matplotlib.pyplot as plt
 from math import floor, log10, sqrt
 
 
-def single_plot_from_pickle(dim, dv, path, gtol=1.e-10, perc=0, d=1):
+def single_plot_from_pickle(dim, dv, path, perc=0, d=1, max_dist=None, max_dist_dim=None):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=dv)
     matrices = hl.dilute_lattice(hl.adjacency_matrix(l), perc)
     A = np.add(matrices[0], matrices[1])
+    if max_dist is None:
+        path2 = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}/dim={max_dist_dim}_dv={dv}_perc=0.pickle'
+        max_dist = max(calculate_distance(max_dist_dim, dv, path2, perc, d)) + d/sqrt(3)
 
     pos = {}
     list_mobile_coords = pickle.load(open(path, 'rb')).x
@@ -26,7 +29,7 @@ def single_plot_from_pickle(dim, dv, path, gtol=1.e-10, perc=0, d=1):
             vector = l[i].return_coordinates()
             pos[i] = (vector[0], vector[1], vector[2])
 
-    plot.draw_initial_graph(A, 22, pos, l, dist=calculate_distance(dim, dv, path, perc, d), e=d/sqrt(3))
+    plot.draw_initial_graph(A, 22, pos, l, max_dist)
 
 
 def print_convergence(dim, dv, gtol=1.e-10, perc=0):
@@ -142,7 +145,7 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.show()
 
 
-dim = 15
+dim = 30
 dv = 10.0
 path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}/dim={dim}_dv={dv}_perc=0.pickle'
-single_plot_from_pickle(dim, dv, path)
+single_plot_from_pickle(dim, dv, path, max_dist_dim=15)

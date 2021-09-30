@@ -10,7 +10,7 @@ import pickle
 import argparse
 from scipy.optimize import curve_fit
 from math import sqrt
-from plot import round_sig
+from helpful_functions import round_sig
 
 
 def measure_time(n0, n_max, digit=2):

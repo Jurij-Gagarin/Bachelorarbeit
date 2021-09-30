@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d
 from math import floor, log10
 import pickle
 from colour import Color
+import helpful_functions as hf
 
 
 class Arrow3D(FancyArrowPatch):
@@ -54,23 +55,11 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r2=1, displace_value=
     return pos
 
 
-def generate_color(dist, max_dist, min_dist, num):
-    interval = np.linspace(min_dist, max_dist, num=num)
-    for i in range(len(interval)):
-        if interval[i] >= dist:
-            return i
-
-
-def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dist=None, num=10, e=0):
+def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=False, num=10):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
     G.add_edges_from(edges)
-    blue = Color('red')
-    colors = list(blue.range_to(Color('green'), num))
-    k = 0
-    max_dist = max(dist)
-    min_dist = min(dist)
 
     with plt.style.context('classic'):
         fig = plt.figure(figsize=(20, 20))
@@ -112,20 +101,17 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dist=
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
             z = np.array((pos[j[0]][2], pos[j[1]][2]))
 
-            dis = ((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5 - e
+            dis = ((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5
             # Plot the connecting lines
-            ax.plot(x, y, z, c=str(colors[generate_color(dis, max_dist, min_dist, num)].hex), alpha=1.0)
-            k+=1
+            ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', hf.round_sig(dis/max_dist)), alpha=1.0)
 
     # Set the initial view
-    # 90
     ax.view_init(13, angle)
     # Hide the axes
     # ax.set_axis_off()
     ax.set_xlabel('x', fontsize=15)
     ax.set_ylabel('y', fontsize=15)
     ax.set_zlabel('z', fontsize=15)
-
     plt.show()
 
 
@@ -166,10 +152,6 @@ def contour_coords(dim, displace_value, path, tol=.1):
     return x, z, res.fun
 
 
-def round_sig(x, sig=2):
-    return round(x, sig - int(floor(log10(abs(x)))) - 1)
-
-
 def fit_contour(min_dim, max_dim, disp_value):
     print(f'max dim = {max_dim}')
 
@@ -185,7 +167,7 @@ def fit_contour(min_dim, max_dim, disp_value):
             x_new = np.linspace(m2, m1, num=1000, endpoint=True)
             f2 = interp1d(coords[0], coords[1])
 
-            plt.plot(x_new, f2(x_new), label=f'dim = {i}, E={round_sig(coords[2])}')
+            plt.plot(x_new, f2(x_new), label=f'dim = {i}, E={hf.round_sig(coords[2])}')
     plt.ylabel('z-Achse', size=16)
     plt.xlabel('x-Achse', size=16)
     plt.legend()
