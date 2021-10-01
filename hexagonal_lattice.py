@@ -252,7 +252,6 @@ def dilute_lattice_point(adjacency_matrix, percentile):
     return A + np.transpose(A), As + np.transpose(As)
 
 
-
 def dilute_lattice(adjacency_matrix, percentile):
     A = np.triu(adjacency_matrix[0])
     As = np.triu(adjacency_matrix[1])
@@ -452,7 +451,6 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
     j = 0
 
     if true_convergence and res.success:
-        # makes only sense if percentile=0
         j = 1
 
         res2 = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x,

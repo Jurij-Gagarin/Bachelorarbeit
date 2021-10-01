@@ -11,6 +11,7 @@ from math import floor, log10
 import pickle
 from colour import Color
 import helpful_functions as hf
+from matplotlib import gridspec
 
 
 class Arrow3D(FancyArrowPatch):
@@ -62,8 +63,13 @@ def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=Fa
     G.add_edges_from(edges)
 
     with plt.style.context('classic'):
-        fig = plt.figure(figsize=(20, 20))
-        ax = Axes3D(fig)
+        fig = plt.figure(figsize=(20,20), facecolor='white', constrained_layout=False)
+        gs = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[10,1], wspace=0)
+        #ax = plt.subplot(gs[0])
+        ax = fig.add_subplot(gs[0], projection='3d')
+        ax2 = plt.subplot(gs[1])
+        ax2.set_aspect(.01)
+        #ax = Axes3D(fig)
 
         if nodes:
             for key, value in pos.items():
@@ -102,17 +108,29 @@ def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=Fa
             z = np.array((pos[j[0]][2], pos[j[1]][2]))
 
             dis = ((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5
-            # Plot the connecting lines
-            ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', hf.round_sig(dis/max_dist)), alpha=1.0)
+            # Plot the connecting lines #1f77b4
+            ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', hf.round_sig(dis/max_dist)), alpha=.75)
 
     # Set the initial view
-    ax.view_init(13, angle)
+    ax.view_init(7, -48)
     # Hide the axes
     # ax.set_axis_off()
     ax.set_xlabel('x', fontsize=15)
     ax.set_ylabel('y', fontsize=15)
     ax.set_zlabel('z', fontsize=15)
+    ax2.set_xlabel('elongation', fontsize=15)
+
+    c1 = '#1f77b4'
+    c2 = 'red'
+    n = 500
+
+    for x in range(n + 1):
+        ax2.axvline(x / n, color=hf.color_fade(c1, c2, x / n), linewidth=4)
+    ax2.axes.get_yaxis().set_visible(False)
+
+    gs.tight_layout(fig)
     plt.show()
+
 
 
 def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
@@ -175,4 +193,4 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-plot_graph(20, displace_value=5.0, percentile=20, x0=True)
+#plot_graph(15, displace_value=5.0, percentile=20, x0=True, max_dist=5)
