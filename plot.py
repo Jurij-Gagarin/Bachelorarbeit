@@ -56,7 +56,7 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r2=1, displace_value=
     return pos
 
 
-def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=False, num=10):
+def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=10):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
@@ -67,9 +67,11 @@ def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=Fa
         gs = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[10,1], wspace=0)
         #ax = plt.subplot(gs[0])
         ax = fig.add_subplot(gs[0], projection='3d')
+        ax.set_title('Diluted lattice (5%) with dim=20, dv=5', size=30)
         ax2 = plt.subplot(gs[1])
         ax2.set_aspect(.01)
         #ax = Axes3D(fig)
+        max_dis = []
 
         if nodes:
             for key, value in pos.items():
@@ -107,18 +109,24 @@ def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=Fa
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
             z = np.array((pos[j[0]][2], pos[j[1]][2]))
 
-            dis = ((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5
-            # Plot the connecting lines #1f77b4
-            ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', hf.round_sig(dis/max_dist)), alpha=.75)
+            max_dis.append(((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5)
+
+        # Plot the connecting lines #1f77b4
+        max_dist = max(max_dis)
+        for i, j in enumerate(G.edges()):
+            x = np.array((pos[j[0]][0], pos[j[1]][0]))
+            y = np.array((pos[j[0]][1], pos[j[1]][1]))
+            z = np.array((pos[j[0]][2], pos[j[1]][2]))
+            ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', hf.round_sig(max_dis[i]/max_dist)), alpha=.75)
 
     # Set the initial view
     ax.view_init(7, -48)
     # Hide the axes
     # ax.set_axis_off()
-    ax.set_xlabel('x', fontsize=15)
-    ax.set_ylabel('y', fontsize=15)
-    ax.set_zlabel('z', fontsize=15)
-    ax2.set_xlabel('elongation', fontsize=15)
+    ax.set_xlabel('x', fontsize=20)
+    ax.set_ylabel('y', fontsize=20)
+    ax.set_zlabel('z', fontsize=20)
+    ax2.set_title('elongation scale edge-length/max-elonagtion', fontsize=20)
 
     c1 = '#1f77b4'
     c2 = 'red'
@@ -134,7 +142,7 @@ def draw_initial_graph(A, angle, pos, lattice, max_dist, nodes=False, vectors=Fa
 
 
 def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
-               tol=1.e-03, x0=None, max_dist=10):
+               tol=1.e-03, x0=None, max_dist=1):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
@@ -193,4 +201,4 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-#plot_graph(15, displace_value=5.0, percentile=20, x0=True, max_dist=5)
+# plot_graph(20, displace_value=5.0, percentile=5, x0=True, max_dist=5)

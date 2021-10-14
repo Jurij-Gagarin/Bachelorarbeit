@@ -3,12 +3,21 @@ import pickle
 import argparse
 
 
-def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True):
-    path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}.pickle'
-    result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge)
-    pickle_out = open(path, 'wb')
-    pickle.dump(result, pickle_out)
-    pickle_out.close()
+def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, n=1):
+    for i in range(n):
+        path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{i + 1}.pickle'
+        try:
+            result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
+                                                  x0=True)
+        except FileNotFoundError:
+            print('Did not found x0')
+            result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
+                                                  x0=False)
+
+        pickle_out = open(path, 'wb')
+        pickle.dump(result, pickle_out)
+        pickle_out.close()
+        print(f'pickle with dim={dim}, dv={dv} and dilution={percentile} successfully exported. {i+1} out of {n}')
 
 
 parser = argparse.ArgumentParser(
@@ -21,8 +30,8 @@ parser.add_argument('--gtol', type=float, default=1.e-3,
 parser.add_argument('--conv', choices=('True', 'False'), default='True',
                     help='if set to false gtol will not be generated automatically. Passing gtol'
                          'than becomes necessary')
+parser.add_argument('--n', type=int, default=1, help='number of times the minimization should happen')
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True')
-    print(f'pickle with dim={args.dim}, dv={args.dv} and dilution={args.p} successfully exported')
+    export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.n)

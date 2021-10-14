@@ -443,7 +443,8 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
     A = dilute_lattice_point(adjacency_matrix(l), percentile)
 
     if x0:
-        path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{displace_value}/dim={dim}_dv={displace_value}_perc=0.pickle'
+        path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{displace_value}_0/dim={dim}' \
+               f'_dv={displace_value}_perc=0.pickle'
         x0 = pickle.load(open(path, 'rb')).x
 
     res = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func)
@@ -479,7 +480,12 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
 
 if __name__ == '__main__':
     # In here you can run this module
-    # for i in range(10 + 1): print(i/10, check_gradient(5, i/10, 0))
+
+    lattice = create_lattice(50, 1)[0]
+    r = list_of_coordinates(lattice)
+    lattice2 = create_lattice(25, 1)[0]
+    r2 = list_of_coordinates(lattice2)
+    print(len(r[0]) + len(r[1]), len(r2[0]) + len(r2[1]))
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 

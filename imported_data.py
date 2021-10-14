@@ -8,18 +8,16 @@ from math import floor, log10, sqrt
 import helpful_functions as hf
 
 
-def single_plot_from_pickle(dim, dv, path, perc=0, d=1, max_dist=None, max_dist_dim=None):
+def single_plot_from_pickle(dim, dv, path, perc=0, d=1):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=dv)
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), perc)
     A = np.add(matrices[0], matrices[1])
-    if max_dist is None:
-        path2 = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_{perc}/dim={max_dist_dim}_dv={dv}_perc=0.pickle'
-        max_dist = max(calculate_distance(max_dist_dim, dv, path2, perc, d)) + d/sqrt(3)
-
     pos = {}
-    list_mobile_coords = pickle.load(open(path, 'rb')).x
+    pic = pickle.load(open(path, 'rb'))
+    list_mobile_coords = pic.x
+    print('Energy: ', pic.fun)
 
     for i in range(0, len(l)):
         if l[i].return_mobility():
@@ -30,7 +28,7 @@ def single_plot_from_pickle(dim, dv, path, perc=0, d=1, max_dist=None, max_dist_
             vector = l[i].return_coordinates()
             pos[i] = (vector[0], vector[1], vector[2])
 
-    plot.draw_initial_graph(A, 22, pos, l, max_dist)
+    plot.draw_initial_graph(A, 22, pos, l)
 
 
 def print_convergence(dim, dv, gtol=1.e-10, perc=0):
@@ -63,7 +61,7 @@ def calculate_distance(dim, dv, path, perc=0, d=1):
     pic = pickle.load(open(path, 'rb'))
     distance = []
     x = pic.x
-    adj = hl.dilute_lattice(hl.adjacency_matrix(lattice), perc)
+    adj = hl.dilute_lattice_point(hl.adjacency_matrix(lattice), perc)
     mrows, mcols, imrows, imcols, e = hl.energy_func_prep(np.triu(adj[0]), np.triu(adj[1]), d)
     xs, no_use, xsdict, xdict = hl.list_of_coordinates(lattice)
 
@@ -146,12 +144,10 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.show()
 
 
-
-
-
-dim = 9
-dv = 10.0
-perc = 0
-path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_{perc}/dim={dim}_dv={dv}_perc=0.pickle'
-single_plot_from_pickle(dim, dv, path, perc=0, max_dist_dim=9)
+dim = 20
+dv = 5.0
+perc = 5
+n=3
+path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_{dim}_{dv}_{perc}/dim={dim}_dv={dv}_perc={perc}_{n}.pickle'
+single_plot_from_pickle(dim, dv, path, perc=0)
 
