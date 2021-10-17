@@ -481,11 +481,6 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
 if __name__ == '__main__':
     # In here you can run this module
 
-    lattice = create_lattice(50, 1)[0]
-    r = list_of_coordinates(lattice)
-    lattice2 = create_lattice(25, 1)[0]
-    r2 = list_of_coordinates(lattice2)
-    print(len(r[0]) + len(r[1]), len(r2[0]) + len(r2[1]))
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 
