@@ -229,7 +229,7 @@ def dilute_lattice_point(adjacency_matrix, percentile):
     n = len(A)
     m = len(A[0])
 
-    rows_to_delete = rn.sample(list(range(n)), int(hf.round_sig(n*percentile/100)))
+    rows_to_delete = rn.sample(list(range(n)), int(hf.round_sig(n * percentile / 100)))
     for i in rows_to_delete:
         A[i] = np.zeros(m)
         # As[i] = np.zeros(m)
@@ -338,6 +338,18 @@ def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice,
     return .5 * k * total_energy
 
 
+def energy_func_sphere(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, r, d=1, k=2):
+    total_energy = 0
+    total_energy += energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, d,
+                                    k)
+    for i in range(int(len(x)/3)):
+        rad_node = (x[3 * i] ** 2 + x[3 * i + 1] ** 2 + x[3 * i + 2] ** 2) ** .5
+        total_energy += (r / rad_node) ** 12
+
+
+    return total_energy
+
+
 def energy_func_jac_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, d=1, k=2):
     # Calculates jacobian i.e. the gradient for the energy function. Might be optimized in the future.
     len_x = len(x)
@@ -366,6 +378,19 @@ def energy_func_jac_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, latt
     return grad
 
 
+def energy_func_jac_sphere(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, r, d=1,
+                           k=2):
+    grad = energy_func_jac_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, d=1,
+                               k=2)
+
+    for i in range(int(len(grad)/3)):
+        factor = -12 * r**12/(x[3*i]**2+x[3*i+1]**2+x[3*i+2]**2)**7
+        grad[3 * i] += factor * x[3 * i]
+        grad[3 * i + 1] += factor * x[3 * i + 1]
+        grad[3 * i + 2] += factor * x[3 * i + 2]
+    return grad
+
+
 def minimize_energy_opt(lattice, method, tol, d, k, option, x0, A, jac_func):
     # Structures the act of energy minimization.
     r = list_of_coordinates(lattice)
@@ -383,16 +408,31 @@ def minimize_energy_opt(lattice, method, tol, d, k, option, x0, A, jac_func):
     return minimum
 
 
-def check_gradient(dim, dv, perc, d=1, k=2):
-    ls = create_lattice(dim, d)
+def minimize_energy_sphere(lattice, method, tol, d, k, option, x0, A, jac_func, rad):
+    r = list_of_coordinates(lattice)
+    preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
+    args = (r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3], lattice, preps[4], np.add(A[0], A[1]),
+            {v: k for k, v in r[3].items()}, rad, d, k)
+
+    if x0 is None:
+        minimum = opt.minimize(energy_func_sphere, r[1], method=method, jac=jac_func, tol=tol,
+                               args=args, options=option)
+    else:
+        minimum = opt.minimize(energy_func_sphere, x0, method=method, jac=jac_func, tol=tol,
+                               args=args, options=option)
+
+    return minimum
+
+
+def check_gradient(dim, rad, perc, d=1, k=2):
+    ls = create_lattice_sphere(dim, rad**2, d)
     l = ls[0]
-    l = manipulate_lattice_absolute_value(l, ls[1], dv)
     A = dilute_lattice(adjacency_matrix(l), perc)
     r = list_of_coordinates(l)
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
 
-    return opt.check_grad(energy_func_opt, energy_func_jac_opt, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
-                          preps[3], l, preps[4], np.add(A[0], A[1]), {v: k for k, v in r[3].items()}, d, k)
+    return opt.check_grad(energy_func_sphere, energy_func_jac_sphere, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
+                          preps[3], l, preps[4], np.add(A[0], A[1]), {v: k for k, v in r[3].items()}, rad, d, k)
 
 
 def assemble_result(result, fixed_values, plot=False):
@@ -478,9 +518,48 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
     return res
 
 
+def run_sphere(dim, rad, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentile=0,
+               opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac_sphere):
+    ls = create_lattice_sphere(dim, rad**2, d)
+    l = ls[0]
+    A = dilute_lattice_point(adjacency_matrix(l), percentile)
+
+    res = minimize_energy_sphere(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func,
+                                 rad=rad)
+    # print(res.fun, res.message, f'tol={tol}')
+    j = 0
+
+    if true_convergence and res.success:
+        j = 1
+
+        res2 = minimize_energy_sphere(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x,
+                                      A=A, jac_func=jac_func, rad=rad)
+        # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
+        while abs(1 - res2.fun / res.fun) > .001:
+
+            if not res2.success:
+                # print('Minimization failed, try to increase k')
+                print(res2.message)
+                break
+            j += 1
+            res = res2
+            res2 = minimize_energy_sphere(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x,
+                                          A=A, jac_func=jac_func, rad=rad)
+            # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
+        res = res2
+
+    print(res.fun, res.message, f'tol={tol / 10 ** j}')
+
+    if plot:
+        assemble_result(res.x, list_of_coordinates(l)[0], plot=plot)
+
+    return res
+
+
 if __name__ == '__main__':
     # In here you can run this module
 
+    run_sphere(15, 3, plot=True)
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 
