@@ -346,7 +346,6 @@ def energy_func_sphere(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, latti
         rad_node = (x[3 * i] ** 2 + x[3 * i + 1] ** 2 + x[3 * i + 2] ** 2) ** .5
         total_energy += (r / rad_node) ** 12
 
-
     return total_energy
 
 
@@ -559,7 +558,7 @@ def run_sphere(dim, rad, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentil
 if __name__ == '__main__':
     # In here you can run this module
 
-    run_sphere(15, 3, plot=True)
+    print(run_absolute_displacement(30, .5))
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 

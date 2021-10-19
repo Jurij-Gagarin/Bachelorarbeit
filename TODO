@@ -3,4 +3,4 @@ TODO-list
 -Bilder großer Gitter mit Verdünnungen von 0-20%
 -mehrere Elongation-Hist-Plot einer Verdünnung
 -Gitter mit gleicher Verdünnung verschieden stark auslenken, dann dv gegen E auftragen
--Kugel coden
+-großes Gitter (dim=30) mit über viele dv auslenekn (0-15 in .5 Schritten

@@ -34,11 +34,11 @@ def generate_initial_plot_positions(lattice):
     return pos
 
 
-def generate_manipulated_plot_positions(dim, lattice, opt, r2=1, displace_value=1, factor=False, d=1, k=2, method='CG',
+def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1, sphere=False, d=1, k=2, method='CG',
                                         percentile=0, tol=1.e-06, x0=None):
     pos = {}
-    if factor:
-        list_mobile_coords = hl.run_sphere(dim, r2, plot=False).x
+    if sphere:
+        list_mobile_coords = hl.run_sphere(dim, r, plot=False).x
     else:
         res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
                                            , tol=tol, x0=x0)
@@ -56,7 +56,7 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r2=1, displace_value=
     return pos
 
 
-def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=10):
+def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=10, d=1):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
@@ -66,10 +66,8 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
         fig = plt.figure(figsize=(20,20), facecolor='white', constrained_layout=False)
         gs = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[10,1], wspace=0)
         #ax = plt.subplot(gs[0])
-        ax = fig.add_subplot(gs[0], projection='3d')
-        ax.set_title('Diluted lattice (5%) with dim=20, dv=5', size=30)
-        ax2 = plt.subplot(gs[1])
-        ax2.set_aspect(.01)
+        ax = fig.add_subplot(projection='3d')
+        ax.set_title('', size=30)
         #ax = Axes3D(fig)
         max_dis = []
 
@@ -109,39 +107,34 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
             z = np.array((pos[j[0]][2], pos[j[1]][2]))
 
-            max_dis.append(((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5)
+            max_dis.append(((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5 - d/3**.5)
 
         # Plot the connecting lines #1f77b4
         max_dist = max(max_dis)
+        print(max_dist)
         for i, j in enumerate(G.edges()):
             x = np.array((pos[j[0]][0], pos[j[1]][0]))
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
             z = np.array((pos[j[0]][2], pos[j[1]][2]))
-            ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', hf.round_sig(max_dis[i]/max_dist)), alpha=.75)
+            #print(hf.round_sig(max_dis[i]/max_dist), i)
+            ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', abs(max_dis[i]/max_dist)), alpha=.75)
 
     # Set the initial view
-    ax.view_init(7, -48)
+    ax.view_init(10, 0)
     # Hide the axes
     # ax.set_axis_off()
-    ax.set_xlabel('x', fontsize=20)
-    ax.set_ylabel('y', fontsize=20)
-    ax.set_zlabel('z', fontsize=20)
-    ax2.set_title('elongation scale edge-length/max-elonagtion', fontsize=20)
+    ax.set_xlabel('x', fontsize=25)
+    ax.set_ylabel('y', fontsize=25)
+    ax.set_zlabel('z', fontsize=25)
+    ax.tick_params(axis="x", labelsize=20)
+    ax.tick_params(axis="y", labelsize=20)
+    ax.tick_params(axis="z", labelsize=20)
+    # ax.set_title('dim=20, dv=5, \u03C6')
 
-    c1 = '#1f77b4'
-    c2 = 'red'
-    n = 500
-
-    for x in range(n + 1):
-        ax2.axvline(x / n, color=hf.color_fade(c1, c2, x / n), linewidth=4)
-    ax2.axes.get_yaxis().set_visible(False)
-
-    gs.tight_layout(fig)
     plt.show()
 
 
-
-def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
+def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
                tol=1.e-03, x0=None, max_dist=1):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
@@ -149,12 +142,15 @@ def plot_graph(dim, r2=1, displace_value=1, factor=False, d=1, k=2, nodes=False,
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile)
     A = np.add(matrices[0], matrices[1])
 
+    if sphere:
+        l = hl.create_lattice_sphere(dim, r**2, d)[0]
+
     draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l,
-                                                                  r2=r2,
-                                                                  displace_value=displace_value, factor=factor,
+                                                                  r=r,
+                                                                  displace_value=displace_value, sphere=sphere,
                                                                   d=d, k=k, method=method, percentile=percentile,
                                                                   opt=opt, tol=tol, x0=x0),
-                       l, nodes=nodes, max_dist=max_dist)
+                       l, nodes=nodes)
 
 
 def import_pickle(path):
@@ -201,4 +197,4 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-# plot_graph(20, displace_value=5.0, percentile=5, x0=True, max_dist=5)
+# plot_graph(20, displace_value=5, percentile=10, x0=True, max_dist=5, sphere=False)

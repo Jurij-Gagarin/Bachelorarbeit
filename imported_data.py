@@ -90,14 +90,18 @@ def calculate_distance(dim, dv, path, perc=0, d=1):
 def plot_histograms(dims, dvs):
     for d in dims:
         for dv in dvs:
-            paths = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}/dim={d}_dv={dv}_perc=0.pickle'
+            paths = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={d}_dv={dv}_perc=0.pickle'
             arr = calculate_distance(d, dv, paths)
             maximum = max(arr)
             plt.hist(arr, density=True, bins=200, label=f'dim={d}, dv={dv}, max elongation = '
                                                         f'{round(maximum, 2 - int(floor(log10(abs(maximum)))) - 1)}')
         dvs_str = ', '.join(str(e) for e in dvs)
-        plt.title(f'Elongation-histogram-plot for lattices with different dims, displaced by dv={dvs_str}')
-    plt.legend()
+        plt.title(f'Elongation-histogram-plot for lattices with different dims, displaced by dv={dvs_str}', size=20)
+    plt.legend(fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.ylabel('Anzahl', fontsize=20)
+    plt.xlabel('Abstand - Gleichgewichtsabstand', fontsize=20)
     plt.show()
 
 
@@ -105,7 +109,7 @@ def plot_links_mean_value(dims, dvs):
     means = []
     links = []
     for d in dims:
-        paths = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dvs[0]}/dim={d}_dv={dvs[0]}_perc=0.pickle'
+        paths = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dvs[0]}_0/dim={d}_dv={dvs[0]}_perc=0.pickle'
         arr = calculate_distance(d, dvs[0], paths)
         mean = np.mean(arr)
         lattice = hl.create_lattice(d, 1)[0]
@@ -144,10 +148,13 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.show()
 
 
+
+
 dim = 20
 dv = 5.0
-perc = 5
-n=3
-path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_{dim}_{dv}_{perc}/dim={dim}_dv={dv}_perc={perc}_{n}.pickle'
+perc = 0
+n=0
+path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={dim}_dv={dv}_perc={perc}.pickle'
 single_plot_from_pickle(dim, dv, path, perc=0)
+
 

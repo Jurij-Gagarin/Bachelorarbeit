@@ -5,19 +5,22 @@ import argparse
 
 def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, n=1):
     for i in range(n):
-        path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{i + 1}.pickle'
-        try:
-            result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
-                                                  x0=True)
-        except FileNotFoundError:
-            print('Did not found x0')
-            result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
-                                                  x0=False)
+        j = 0
+        while j <= dv:
+            path = f'./current_measurements/dim={dim}_dv={j}_perc={percentile}_{i + 1}.pickle'
+            try:
+                result = hl.run_absolute_displacement(dim, j, tol=gtol, percentile=percentile, true_convergence=converge,
+                                                      x0=True)
+            except FileNotFoundError:
+                print('Did not found x0')
+                result = hl.run_absolute_displacement(dim, j, tol=gtol, percentile=percentile, true_convergence=converge,
+                                                      x0=None)
 
-        pickle_out = open(path, 'wb')
-        pickle.dump(result, pickle_out)
-        pickle_out.close()
-        print(f'pickle with dim={dim}, dv={dv} and dilution={percentile} successfully exported. {i+1} out of {n}')
+            pickle_out = open(path, 'wb')
+            pickle.dump(result, pickle_out)
+            pickle_out.close()
+            print(f'pickle with dim={dim}, dv={j} and dilution={percentile} successfully exported. {i+1} out of {n}')
+            j+=.5
 
 
 parser = argparse.ArgumentParser(

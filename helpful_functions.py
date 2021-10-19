@@ -14,7 +14,7 @@ def round_sig(x, sig=2):
     return round(x, sig - int(floor(log10(abs(x)))) - 1)
 
 
-def plot_colorbar():
+def plot_colorbar(max_dist, d):
     c1 = '#1f77b4'
     c2 = 'red'
     n = 500
@@ -23,4 +23,14 @@ def plot_colorbar():
     for x in range(n + 1):
         ax.axvline(x/n, color=color_fade(c1, c2, x / n), linewidth=4)
     ax.axes.get_yaxis().set_visible(False)
+    ax.set_aspect(.01)
+    eps = d/3**.5
+    ratio = max_dist/eps**2
+    labels = [1, 1 + .2*ratio, 1 + .4*ratio, 1 + .6*ratio, 1 + .8*ratio, 1 + ratio]
+    for i in range(len(labels)):
+        labels[i] = str(round_sig(labels[i], 3)) + '$ \epsilon$'
+    print(labels)
+    ax.set_xticklabels(labels)
+    plt.show()
 
+#plot_colorbar(0.11055606682194574, 1)
