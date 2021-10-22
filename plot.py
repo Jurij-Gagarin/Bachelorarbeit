@@ -64,7 +64,6 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
 
     with plt.style.context('classic'):
         fig = plt.figure(figsize=(20,20), facecolor='white', constrained_layout=False)
-        gs = gridspec.GridSpec(ncols=1, nrows=2, height_ratios=[10,1], wspace=0)
         #ax = plt.subplot(gs[0])
         ax = fig.add_subplot(projection='3d')
         ax.set_title('', size=30)
@@ -180,7 +179,7 @@ def fit_contour(min_dim, max_dim, disp_value):
     for i in range(min_dim, max_dim + 1):
         if i % 2 == 0:
             print(f'working on dim = {i}')
-            path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{disp_value}/dim={i}_dv={disp_value}_perc=0.pickle'
+            path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{disp_value}_0/dim={i}_dv={disp_value}_perc=0.pickle'
             coords = contour_coords(i, disp_value, path=path)
             plt.plot(coords[0], coords[1], marker='o', linestyle='None', c='blue', markersize=1)
 
@@ -192,9 +191,12 @@ def fit_contour(min_dim, max_dim, disp_value):
             plt.plot(x_new, f2(x_new), label=f'dim = {i}, E={hf.round_sig(coords[2])}')
     plt.ylabel('z-Achse', size=16)
     plt.xlabel('x-Achse', size=16)
-    plt.legend()
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.legend(fontsize=15)
     plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
     plt.show()
 
 
 # plot_graph(20, displace_value=5, percentile=10, x0=True, max_dist=5, sphere=False)
+fit_contour(5, 50, 10.0)

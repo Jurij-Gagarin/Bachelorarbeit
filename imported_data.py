@@ -5,6 +5,7 @@ import plot
 import pickle
 import matplotlib.pyplot as plt
 from math import floor, log10, sqrt
+from scipy.optimize import curve_fit
 import helpful_functions as hf
 
 
@@ -41,17 +42,21 @@ def plot_energy_convergence(dv, min_d, max_d):
     energy = np.zeros(max_d - min_d + 1)
     dims = list(range(min_d, max_d + 1))
     for i in range(min_d, max_d + 1):
-        path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}/dim={i}_dv={dv}_perc=0.pickle'
+        path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={i}_dv={dv}_perc=0.pickle'
         pic = pickle.load(open(path, 'rb'))
         energy[i - min_d] = pic.fun
         if not pic.success:
             print(pic.message, f'dim={i}')
-    x_min = 5
-    plt.scatter(dims[x_min - min_d:], energy[x_min - min_d:], marker='o', s=15, label=f'dv={dv}')
-    plt.xlabel('dim', size=16)
-    plt.ylabel('energy', size=16)
-    plt.legend()
-    plt.title('Minimum energy for lattices of different scales displaced by different dv')
+
+    fig, ax = plt.subplots(figsize=[15, 10])
+    ax.scatter(dims, energy, label='Daten')
+    ax.set_title('Minimale Energie aufgetragen gegen dim', size=20)
+    ax.set_ylabel('Minimale Energie in J', size=20)
+    ax.set_xlabel('dim', size=20)
+    ax.legend(fontsize=15)
+    ax.tick_params(axis="x", labelsize=15)
+    ax.tick_params(axis="y", labelsize=15)
+    ax.set_aspect(.2)
     plt.show()
 
 
@@ -148,6 +153,36 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.show()
 
 
+def x4(x, a):
+    return a*x**4
+
+
+def plot_energy_vs_dv(dim, min_dv, max_dv, dv_step=.5, perc=0):
+    energy = []
+    dvs = []
+    fit = []
+    for i in range(min_dv, max_dv):
+        path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_{dim}_0-30_0/dim={dim}_dv={float(i)}_perc={perc}_1.pickle'
+        pic = pickle.load(open(path, 'rb'))
+        dvs.append(i)
+        energy.append(pic.fun)
+
+    fig, ax = plt.subplots(figsize=[15, 10])
+    pars, cov = curve_fit(x4, dvs, energy)
+    x = np.linspace(min_dv, max_dv, num=100)
+    for i in x:
+        fit.append(x4(i, pars[0]))
+    ax.plot(dvs, energy, marker='o', linestyle='none', label='Daten')
+    ax.plot(x, fit, label=f'${hf.round_sig(pars[0])}x^4$, Parameterfehler {hf.round_sig(sqrt(cov), 1)}')
+    ax.set_title('Minimale Energie aufgetragen gegen dv', size=20)
+    ax.set_ylabel('Minimale Energie in J', size=20)
+    ax.set_xlabel('dv in Vielfachen von d', size=20)
+    ax.legend(fontsize=15)
+    ax.tick_params(axis="x", labelsize=15)
+    ax.tick_params(axis="y", labelsize=15)
+    ax.set_aspect(.2)
+
+    plt.show()
 
 
 dim = 20
@@ -155,6 +190,6 @@ dv = 5.0
 perc = 0
 n=0
 path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={dim}_dv={dv}_perc={perc}.pickle'
-single_plot_from_pickle(dim, dv, path, perc=0)
+#single_plot_from_pickle(dim, dv, path, perc=0)
 
 
