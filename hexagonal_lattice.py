@@ -221,19 +221,7 @@ def adjacency_matrix(lattice, plot=False):
     return A, As
 
 
-def dilute_lattice_point(adjacency_matrix, percentile):
-    A = np.triu(adjacency_matrix[0])
-    As = np.triu(adjacency_matrix[1])
-    if percentile == 0:
-        return A + np.transpose(A), As + np.transpose(As)
-    n = len(A)
-    m = len(A[0])
-
-    rows_to_delete = rn.sample(list(range(n)), int(hf.round_sig(n * percentile / 100)))
-    for i in rows_to_delete:
-        A[i] = np.zeros(m)
-        # As[i] = np.zeros(m)
-
+def clear_lattice(A, As):
     s = len(A[0])
     changes = True
     while changes:
@@ -250,6 +238,44 @@ def dilute_lattice_point(adjacency_matrix, percentile):
                 As[:, i] = np.zeros(s)
 
     return A + np.transpose(A), As + np.transpose(As)
+
+
+def dilute_lattice_point(adjacency_matrix, percentile, lattice, seed):
+    A = np.tril(adjacency_matrix[0])
+    As = np.tril(adjacency_matrix[1])
+    if percentile == 0:
+        return clear_lattice(A, As)
+    n = len(A)
+    m = len(A[0])
+    blue_nodes = []
+
+    for i in range(len(lattice)):
+        if lattice[i].return_name()[2] == 1:
+            blue_nodes.append(i)
+
+    rn.seed(seed)
+    rows_to_delete = rn.sample(blue_nodes, int(hf.round_sig(n * percentile / 100)))
+    for j in rows_to_delete:
+        A[j] = np.zeros(m)
+
+    return clear_lattice(A, As)
+
+
+def dilute_lattice_point2(adjacency_matrix, percentile, lattice, seed):
+    A = np.tril(adjacency_matrix[0])
+    As = np.tril(adjacency_matrix[1])
+    if percentile == 0:
+        return clear_lattice(A, As)
+    n = len(A)
+    m = len(A[0])
+    blue_nodes = []
+
+    rn.seed(seed)
+    rows_to_delete = rn.sample(list(range(n)), int(hf.round_sig(n * percentile / 100)))
+    for j in rows_to_delete:
+        A[j] = np.zeros(m)
+
+    return clear_lattice(A, As)
 
 
 def dilute_lattice(adjacency_matrix, percentile):
@@ -262,23 +288,7 @@ def dilute_lattice(adjacency_matrix, percentile):
     for i in dilution:
         A[rows[i]][cols[i]] = 0
 
-    # delete all springs with only one connection
-    s = len(A[0])
-    changes = True
-    while changes:
-        changes = False
-        single_rows = np.where(np.sum(np.add(A, As), 1) == 1)[0]
-        single_cols = np.where(np.sum(np.add(A, As), 0) == 1)[0]
-        if len(single_rows) > 0 or len(single_cols) > 0:
-            changes = True
-            for i in single_rows:
-                A[i] = np.zeros(s)
-                As[i] = np.zeros(s)
-            for i in single_cols:
-                A[:, i] = np.zeros(s)
-                As[:, i] = np.zeros(s)
-
-    return A + np.transpose(A), As + np.transpose(As)
+    return clear_lattice(A, As)
 
 
 def list_of_coordinates(lattice):
@@ -475,11 +485,11 @@ def assemble_result(result, fixed_values, plot=False):
 
 
 def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentile=0,
-                              opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac_opt):
+                              opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac_opt, seed=None):
     ls = create_lattice(dim, d)
     l = ls[0]
     l = manipulate_lattice_absolute_value(l, ls[1], displace_value)
-    A = dilute_lattice_point(adjacency_matrix(l), percentile)
+    A = dilute_lattice_point(adjacency_matrix(l), percentile, l, seed)
 
     if x0:
         path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{displace_value}_0/dim={dim}' \
@@ -512,16 +522,16 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
     print(res.fun, res.message, f'tol={tol / 10 ** j}')
 
     if plot:
-        assemble_result(res.x, list_of_coordinates(l)[0])
+        assemble_result(res.x, list_of_coordinates(l)[0], plot)
 
     return res
 
 
 def run_sphere(dim, rad, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentile=0,
-               opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac_sphere):
+               opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac_sphere, seed=None):
     ls = create_lattice_sphere(dim, rad**2, d)
     l = ls[0]
-    A = dilute_lattice_point(adjacency_matrix(l), percentile)
+    A = dilute_lattice_point(adjacency_matrix(l), percentile, l)
 
     res = minimize_energy_sphere(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func,
                                  rad=rad)
@@ -555,10 +565,36 @@ def run_sphere(dim, rad, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentil
     return res
 
 
+def number_of_links(dim, percentile):
+    print('percentile, Punkte auflösen, nur blaue Punkte Auflösen')
+    for p in [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 49]:
+        seed = None
+        ls = create_lattice(dim, 1)
+        l = ls[0]
+        sumA1 = []
+        sumA2 = []
+        sumA3 = []
+
+        for i in range(10):
+            adj = adjacency_matrix(l)
+            # adj = dilute_lattice(adj, percentile)
+            A = dilute_lattice_point(adj, percentile, l, seed)
+            AA = dilute_lattice_point2(adj, percentile, l, seed)
+            # A1 = adj[0] + adj[1]
+            A2 = A[0] + A[1]
+            A3 = AA[0] + AA[1]
+
+            # sumA1.append(np.sum(A1))
+            sumA2.append(np.sum(A2))
+            sumA3.append(np.sum(A3))
+        print(percentile, round(np.mean(sumA3)), round(np.mean(sumA2)))
+        # print(sumA1, sumA2, sumA3)
+
+
 if __name__ == '__main__':
     # In here you can run this module
 
-    print(run_absolute_displacement(30, .5))
+
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 

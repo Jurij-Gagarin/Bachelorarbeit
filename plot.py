@@ -5,6 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D, proj3d
 import matplotlib.pyplot as plt
 import numpy as np
 import hexagonal_lattice as hl
+import random as rn
 from matplotlib.patches import FancyArrowPatch
 from scipy.interpolate import interp1d
 from math import floor, log10
@@ -35,13 +36,13 @@ def generate_initial_plot_positions(lattice):
 
 
 def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1, sphere=False, d=1, k=2, method='CG',
-                                        percentile=0, tol=1.e-06, x0=None):
+                                        percentile=0, tol=1.e-06, x0=None, tg=True, seed=None):
     pos = {}
     if sphere:
         list_mobile_coords = hl.run_sphere(dim, r, plot=False).x
     else:
         res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
-                                           , tol=tol, x0=x0)
+                                           , tol=tol, x0=x0, true_convergence=tg, seed=seed)
         list_mobile_coords = res.x
         print(res)
 
@@ -78,10 +79,10 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
                 name = lattice[key].return_name()
                 if name[2] == 1:
                     ax.scatter(xi, yi, zi, c='cornflowerblue', edgecolors='k')
-                    ax.text(xi + .05, yi + .05, zi, f'({name[0]}{name[1]})')
+                    #ax.text(xi + .05, yi + .05, zi, f'({name[0]}{name[1]})')
                 else:
                     ax.scatter(xi, yi, zi, c='red', edgecolors='k')
-                    ax.text(xi + .05, yi + .05, zi, f'({name[0]}{name[1]})')
+                    #ax.text(xi + .05, yi + .05, zi, f'({name[0]}{name[1]})')
                 if vectors:
                     ax.plot((0, 1), (0, 0), (0, 0), lw=5, c='cyan')
                     ax.text(.4, -.25, 0, 'd', size=20, c='cyan')
@@ -134,11 +135,13 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
 
 
 def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, method='CG', percentile=0, opt=None,
-               tol=1.e-03, x0=None, max_dist=1):
+               tol=1.e-03, x0=None, tg=True, seed=None):
+    if seed is None:
+        seed = rn.random()
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
-    matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile)
+    matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile, l, seed)
     A = np.add(matrices[0], matrices[1])
 
     if sphere:
@@ -148,7 +151,7 @@ def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, 
                                                                   r=r,
                                                                   displace_value=displace_value, sphere=sphere,
                                                                   d=d, k=k, method=method, percentile=percentile,
-                                                                  opt=opt, tol=tol, x0=x0),
+                                                                  opt=opt, tol=tol, x0=x0, tg=tg, seed=seed),
                        l, nodes=nodes)
 
 
@@ -198,5 +201,5 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-# plot_graph(20, displace_value=5, percentile=10, x0=True, max_dist=5, sphere=False)
-fit_contour(5, 50, 10.0)
+plot_graph(20, displace_value=.1, percentile=10, x0=None, tg=False, sphere=False, seed=None, tol=1000)
+# fit_contour(5, 50, 10.0)
