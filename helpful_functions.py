@@ -1,6 +1,7 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import random as rn
 from math import floor, log10
 
 
@@ -32,5 +33,15 @@ def plot_colorbar(max_dist, d):
     print(labels)
     ax.set_xticklabels(labels)
     plt.show()
+
+
+def create_seed_list():
+    f = open('./seed_list.txt', 'a')
+    seeds = rn.sample(list(range(100000, 1000000)), 100)
+    for i in seeds:
+        f.writelines(['\n', str(i)])
+    f.close()
+
+
 
 #plot_colorbar(0.11055606682194574, 1)

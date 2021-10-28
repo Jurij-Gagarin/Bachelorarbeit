@@ -3,24 +3,20 @@ import pickle
 import argparse
 
 
-def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, n=1):
-    for i in range(n):
-        j = dv
-        while j >= dv-5:
-            path = f'./current_measurements/dim={dim}_dv={j}_perc={percentile}_{i + 1}.pickle'
-            try:
-                result = hl.run_absolute_displacement(dim, j, tol=gtol, percentile=percentile, true_convergence=converge,
-                                                      x0=True)
-            except FileNotFoundError:
-                print('Did not found x0')
-                result = hl.run_absolute_displacement(dim, j, tol=gtol, percentile=percentile, true_convergence=converge,
-                                                      x0=None)
+def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None):
+    path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{seed}.pickle'
+    try:
+        result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
+                                              x0=True, seed=seed)
+    except FileNotFoundError:
+        print('Did not found x0')
+        result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
+                                              x0=None)
 
-            pickle_out = open(path, 'wb')
-            pickle.dump(result, pickle_out)
-            pickle_out.close()
-            print(f'pickle with dim={dim}, dv={j} and dilution={percentile} successfully exported. {i+1} out of {n}')
-            j-=.5
+    pickle_out = open(path, 'wb')
+    pickle.dump(result, pickle_out)
+    pickle_out.close()
+    print(f'pickle with dim={dim}, dv={dv} and dilution={percentile}, seed={seed} successfully exported.')
 
 
 parser = argparse.ArgumentParser(
@@ -34,7 +30,8 @@ parser.add_argument('--conv', choices=('True', 'False'), default='True',
                     help='if set to false gtol will not be generated automatically. Passing gtol'
                          'than becomes necessary')
 parser.add_argument('--n', type=int, default=1, help='number of times the minimization should happen')
+parser.add_argument('--s', type=int, default=None, help='Seed for dilution')
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.n)
+    export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s)

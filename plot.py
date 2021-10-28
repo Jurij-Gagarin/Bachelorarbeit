@@ -39,7 +39,7 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
                                         percentile=0, tol=1.e-06, x0=None, tg=True, seed=None):
     pos = {}
     if sphere:
-        list_mobile_coords = hl.run_sphere(dim, r, plot=False).x
+        list_mobile_coords = hl.run_sphere(dim, r, dv=displace_value, percentile=percentile, plot=False).x
     else:
         res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
                                            , tol=tol, x0=x0, true_convergence=tg, seed=seed)
@@ -49,7 +49,6 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
     for i in range(0, len(lattice)):
         if lattice[i].return_mobility():
             pos[i] = (list_mobile_coords[0], list_mobile_coords[1], list_mobile_coords[2])
-
             list_mobile_coords = list_mobile_coords[3:]
         elif not lattice[i].return_mobility():
             vector = lattice[i].return_coordinates()
@@ -57,18 +56,16 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
     return pos
 
 
-def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=10, d=1):
+def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0, rad=0, num=10, d=1, draw_sphere=False):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
     G.add_edges_from(edges)
 
     with plt.style.context('classic'):
-        fig = plt.figure(figsize=(20,20), facecolor='white', constrained_layout=False)
-        #ax = plt.subplot(gs[0])
+        fig = plt.figure(figsize=(20, 20), facecolor='white')
         ax = fig.add_subplot(projection='3d')
         ax.set_title('', size=30)
-        #ax = Axes3D(fig)
         max_dis = []
 
         if nodes:
@@ -102,6 +99,16 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
                     ax.add_artist(a1)
                     ax.add_artist(a2)
 
+        if draw_sphere:
+            u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+            x = -rad * np.cos(u) * np.sin(v)
+            y = -rad * np.sin(u) * np.sin(v)
+            z = -rad * np.cos(v) - dv
+            print(ax.get_xlim())
+            print(ax.get_xlim()[0], ax.get_xlim()[1])
+            ax.set_zlim(-8, 0)
+            ax.plot_wireframe(x, y, z, color="green", alpha=.2)
+
         for i, j in enumerate(G.edges()):
             x = np.array((pos[j[0]][0], pos[j[1]][0]))
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
@@ -111,7 +118,6 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
 
         # Plot the connecting lines #1f77b4
         max_dist = max(max_dis)
-        print(max_dist)
         for i, j in enumerate(G.edges()):
             x = np.array((pos[j[0]][0], pos[j[1]][0]))
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
@@ -120,6 +126,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, num=1
             ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', abs(max_dis[i]/max_dist)), alpha=.75)
 
     # Set the initial view
+    ax.set_aspect('auto')
     ax.view_init(10, 0)
     # Hide the axes
     # ax.set_axis_off()
@@ -141,18 +148,19 @@ def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, 
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
+    if sphere:
+        ls = hl.create_lattice_sphere(dim, r, displace_value, d)
+        l = ls[0]
+        l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=-displace_value-r)
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile, l, seed)
     A = np.add(matrices[0], matrices[1])
-
-    if sphere:
-        l = hl.create_lattice_sphere(dim, r**2, d)[0]
 
     draw_initial_graph(A, 22, generate_manipulated_plot_positions(dim, l,
                                                                   r=r,
                                                                   displace_value=displace_value, sphere=sphere,
                                                                   d=d, k=k, method=method, percentile=percentile,
                                                                   opt=opt, tol=tol, x0=x0, tg=tg, seed=seed),
-                       l, nodes=nodes)
+                       l, nodes=nodes, dv=displace_value, rad=r, draw_sphere=sphere)
 
 
 def import_pickle(path):
@@ -201,5 +209,5 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-plot_graph(20, displace_value=.1, percentile=10, x0=None, tg=False, sphere=False, seed=None, tol=1000)
+plot_graph(20, r=1, displace_value=5, percentile=10, x0=True, tg=True, sphere=False)
 # fit_contour(5, 50, 10.0)
