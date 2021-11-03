@@ -9,11 +9,11 @@ from scipy.optimize import curve_fit
 import helpful_functions as hf
 
 
-def single_plot_from_pickle(dim, dv, path, perc=0, d=1):
+def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=dv)
-    matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), perc)
+    matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), perc, l, seed)
     A = np.add(matrices[0], matrices[1])
     pos = {}
     pic = pickle.load(open(path, 'rb'))
@@ -29,7 +29,7 @@ def single_plot_from_pickle(dim, dv, path, perc=0, d=1):
             vector = l[i].return_coordinates()
             pos[i] = (vector[0], vector[1], vector[2])
 
-    plot.draw_initial_graph(A, 22, pos, l)
+    plot.draw_initial_graph(A, 22, pos, l, max_dist=max_dist)
 
 
 def print_convergence(dim, dv, gtol=1.e-10, perc=0):
@@ -185,11 +185,30 @@ def plot_energy_vs_dv(dim, min_dv, max_dv, dv_step=.5, perc=0):
     plt.show()
 
 
+def energy_dil_lattice(path, dim, dv, perc):
+    f = open('./seed_list.txt', 'r')
+    seed = list(map(int, f.readlines()))
+    n = len(seed)
+    energy = np.zeros(n)
+
+    for i in range(int(n)):
+        paths = path + f'dim={dim}_dv={dv}_perc={perc}_{seed[i]}.pickle'
+        energy[i] = pickle.load(open(paths, 'rb')).fun
+    print(np.mean(energy), np.std(energy)/sqrt(n))
+    plt.hist(energy, bins=20)
+    plt.show()
+    return energy
+
+
 dim = 20
 dv = 5.0
-perc = 0
-n=0
-path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={dim}_dv={dv}_perc={perc}.pickle'
-#single_plot_from_pickle(dim, dv, path, perc=0)
+perc = 5
+seed = 122775
+n = 0
+path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_20_5.0_5/'
+# path = f'/home/jurij/Python/Physik/Bachelorarbeit/current_measurements/dim={dim}_dv={dv}_perc={perc}_{seed}.pickle'
+# path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_20_5.0_5/dim=20_dv=5.0_perc=5_{seed}.pickle'
+# single_plot_from_pickle(dim, dv, path, perc, seed, max_dist=0.11055606682194574)
+print(energy_dil_lattice(path, dim, dv, perc))
 
 

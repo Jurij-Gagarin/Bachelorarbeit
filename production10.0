@@ -1,5 +1,5 @@
 #!/bin/bash
 for i in $(cat seed_list.txt)
 do
-  python3 produce.py -dim 20 -dv 5.0 -p 5 --s $i
+  python3 produce.py -dim 30 -dv 10.0 -p 5 --s $i
 done

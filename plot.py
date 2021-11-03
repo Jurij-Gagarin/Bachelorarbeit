@@ -39,7 +39,7 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
                                         percentile=0, tol=1.e-06, x0=None, tg=True, seed=None):
     pos = {}
     if sphere:
-        list_mobile_coords = hl.run_sphere(dim, r, dv=displace_value, percentile=percentile, plot=False).x
+        list_mobile_coords = hl.run_sphere(dim, r, dv=displace_value, percentile=percentile, plot=False, seed=seed).x
     else:
         res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
                                            , tol=tol, x0=x0, true_convergence=tg, seed=seed)
@@ -56,7 +56,7 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
     return pos
 
 
-def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0, rad=0, num=10, d=1, draw_sphere=False):
+def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0, rad=0, max_dist=None, d=1, draw_sphere=False):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
@@ -106,7 +106,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0,
             z = -rad * np.cos(v) - dv
             print(ax.get_xlim())
             print(ax.get_xlim()[0], ax.get_xlim()[1])
-            ax.set_zlim(-8, 0)
+            ax.set_zlim(-16, 0)
             ax.plot_wireframe(x, y, z, color="green", alpha=.2)
 
         for i, j in enumerate(G.edges()):
@@ -117,7 +117,9 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0,
             max_dis.append(((x[0]-x[1])**2+(y[0]-y[1])**2+(z[0]-z[1])**2)**.5 - d/3**.5)
 
         # Plot the connecting lines #1f77b4
-        max_dist = max(max_dis)
+        if max_dist is None:
+            max_dist = max(max_dis)
+        print(f'max dist: {max_dist}')
         for i, j in enumerate(G.edges()):
             x = np.array((pos[j[0]][0], pos[j[1]][0]))
             y = np.array((pos[j[0]][1], pos[j[1]][1]))
@@ -126,8 +128,8 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0,
             ax.plot(x, y, z, c=hf.color_fade('#1f77b4', 'red', abs(max_dis[i]/max_dist)), alpha=.75)
 
     # Set the initial view
-    ax.set_aspect('auto')
-    ax.view_init(10, 0)
+    # ax.set_aspect('auto')
+    ax.view_init(10, 30)
     # Hide the axes
     # ax.set_axis_off()
     ax.set_xlabel('x', fontsize=25)
@@ -136,7 +138,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0,
     ax.tick_params(axis="x", labelsize=20)
     ax.tick_params(axis="y", labelsize=20)
     ax.tick_params(axis="z", labelsize=20)
-    # ax.set_title('dim=20, dv=5, \u03C6')
+    #ax.set_title('dim=20, dv=5, p=10%', size=20)
 
     plt.show()
 
@@ -151,7 +153,7 @@ def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, 
     if sphere:
         ls = hl.create_lattice_sphere(dim, r, displace_value, d)
         l = ls[0]
-        l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=-displace_value-r)
+        #l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=-displace_value-r)
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile, l, seed)
     A = np.add(matrices[0], matrices[1])
 
@@ -209,5 +211,5 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-plot_graph(20, r=1, displace_value=5, percentile=10, x0=True, tg=True, sphere=False)
+plot_graph(20, r=3, displace_value=3, percentile=5, x0=None, tg=True, sphere=True)
 # fit_contour(5, 50, 10.0)

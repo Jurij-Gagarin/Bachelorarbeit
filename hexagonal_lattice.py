@@ -366,8 +366,8 @@ def energy_func_sphere(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, latti
     total_energy += energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, d,
                                     k)
     for i in range(int(len(x)/3)):
-        rad_node = (x[3 * i] ** 2 + x[3 * i + 1] ** 2 + (x[3 * i + 2] - dv) ** 2) ** .5
-        total_energy += 100*(r / rad_node) ** 12
+        rad_node = (r / (x[3 * i] ** 2 + x[3 * i + 1] ** 2 + (x[3 * i + 2] + dv) ** 2) ** .5)**6
+        total_energy += rad_node ** 2 #- rad_node
 
     return total_energy
 
@@ -406,10 +406,11 @@ def energy_func_jac_sphere(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, l
                                k=2)
 
     for i in range(int(len(grad)/3)):
-        factor = -12 * r**12/(x[3*i]**2+x[3*i+1]**2+(x[3*i+2]-dv)**2)**7
+        abs = x[3*i]**2+x[3*i+1]**2+(x[3*i+2]+dv)**2
+        factor = -12 * r**12/abs**7 #+ 6*r**6/abs**4
         grad[3 * i] += factor * x[3 * i]
         grad[3 * i + 1] += factor * x[3 * i + 1]
-        grad[3 * i + 2] += factor * (x[3 * i + 2] - dv)
+        grad[3 * i + 2] += factor * (x[3 * i + 2] + dv)
     return grad
 
 
@@ -578,42 +579,55 @@ def run_sphere(dim, rad, dv=0, d=1, k=2, plot=False, method='CG', tol=1.e-3, per
     return res
 
 
-def number_of_links(dim, percentile):
-    print('percentile, Punkte auflösen, nur blaue Punkte Auflösen')
-    for p in [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 49]:
+def number_of_links(dim):
+    ps = list(range(0, 47, 2))
+    y = []
+    for p in ps:
         seed = None
         ls = create_lattice(dim, 1)
         l = ls[0]
-        sumA1 = []
+        # sumA1 = []
         sumA2 = []
-        sumA3 = []
+        # sumA3 = []
+        print(p)
 
         for i in range(10):
+            print(i)
             adj = adjacency_matrix(l)
             # adj = dilute_lattice(adj, percentile)
-            A = dilute_lattice_point(adj, percentile, l, seed)
-            AA = dilute_lattice_point2(adj, percentile, l, seed)
-            # A1 = adj[0] + adj[1]
+            A = dilute_lattice_point(adj, p, l, seed)
+            # AA = dilute_lattice_point2(adj, percentile, l, seed)
+            A1 = adj[0] + adj[1]
             A2 = A[0] + A[1]
-            A3 = AA[0] + AA[1]
+            # A3 = AA[0] + AA[1]
 
             # sumA1.append(np.sum(A1))
-            sumA2.append(np.sum(A2))
-            sumA3.append(np.sum(A3))
-        print(percentile, round(np.mean(sumA3)), round(np.mean(sumA2)))
-        # print(sumA1, sumA2, sumA3)
+            sumA2.append(np.sum(A2)/np.sum(A1))
+            print(sumA2)
+            # sumA3.append(np.sum(A3))
+        y.append(hf.round_sig(np.mean(sumA2)))
+
+    ps100 = [i/100 for i in ps]
+    ps100m = [1-i / 100 for i in ps]
+    fig = plt.figure(figsize=(20, 20), facecolor='white')
+    ax = fig.add_subplot()
+    ax.plot(ps100, ps100m, label='angegebene Verdünnung')
+    ax.scatter(ps100, y, color='orange', label='tatsächliche Verdünnung')
+    ax.legend(fontsize=15)
+    # ax.set_title('Minimale Energie aufgetragen gegen dv', size=20)
+    ax.set_ylabel('Verdünnte Verbindungen / Verbindungen total', size=20)
+    ax.set_xlabel('p in %', size=20)
+    ax.tick_params(axis="x", labelsize=15)
+    ax.tick_params(axis="y", labelsize=15)
+    ax.set_aspect(.4)
+    plt.show()
 
 
 if __name__ == '__main__':
     # In here you can run this module
-    dim = 15
-    r = 3
-    dv = 2
-    ls = create_lattice_sphere(15, 1, 2)
-    l=ls[0]
-    l=manipulate_lattice_absolute_value(l, ls[1], -dv-r)
-    plot_lattice(l)
-    print(run_sphere(dim, r, dv, plot=True))
+    print(check_gradient(15, 3, 0, 0))
+    #plot_lattice(l)
+    #print(run_sphere(dim, r, dv, plot=True))
     #print(check_gradient(15, 3, 5, 0))
 
 

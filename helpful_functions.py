@@ -42,6 +42,6 @@ def create_seed_list():
         f.writelines(['\n', str(i)])
     f.close()
 
-
+#create_seed_list()
 
 #plot_colorbar(0.11055606682194574, 1)

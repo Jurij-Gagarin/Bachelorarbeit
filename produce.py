@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(
     description='Calculates the energy of a displaced honeycomb lattice and exports this as a pickle')
 parser.add_argument('-dim', type=int, help='Variable that describes the size of the lattice')
 parser.add_argument('-dv', type=float, help='displacement value')
-parser.add_argument('-p', type=int, help='percentile by which the lattice is diluted')
+parser.add_argument('-p', type=float, help='percentile by which the lattice is diluted')
 parser.add_argument('--gtol', type=float, default=1.e-3,
                     help='for successful convergence the gradient norm must be smaller than gtol ')
 parser.add_argument('--conv', choices=('True', 'False'), default='True',
@@ -35,3 +35,7 @@ args = parser.parse_args()
 
 if __name__ == '__main__':
     export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s)
+
+    dim=30
+    dv=10.0
+    p=5
