@@ -506,7 +506,7 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
     A = dilute_lattice_point(adjacency_matrix(l), percentile, l, seed)
 
     if x0:
-        path = f'./measurements/dim_5-50_{displace_value}_0/dim={dim}_dv={displace_value}_perc=0.pickle'
+        path = f'./measurements/x0/dim={dim}_dv={displace_value}_perc=0_None.pickle'
         x0 = pickle.load(open(path, 'rb')).x
 
     res = minimize_energy_opt(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func)

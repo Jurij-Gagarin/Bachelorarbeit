@@ -195,6 +195,7 @@ def energy_dil_lattice(path, dim, dv, perc):
         paths = path + f'dim={dim}_dv={dv}_perc={perc}_{seed[i]}.pickle'
         energy[i] = pickle.load(open(paths, 'rb')).fun
     print(np.mean(energy), np.std(energy)/sqrt(n))
+    f.close()
     plt.hist(energy, bins=20)
     plt.show()
     return energy

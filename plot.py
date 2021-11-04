@@ -210,6 +210,6 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
     plt.show()
 
-
+# TODO:
 plot_graph(20, r=3, displace_value=3, percentile=5, x0=None, tg=True, sphere=True)
 # fit_contour(5, 50, 10.0)

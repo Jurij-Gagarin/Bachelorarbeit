@@ -1,22 +1,27 @@
 import hexagonal_lattice as hl
 import pickle
 import argparse
+import random as rn
 
 
-def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None):
-    path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{seed}.pickle'
-    try:
-        result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
-                                              x0=True, seed=seed)
-    except FileNotFoundError:
-        print('Did not found x0')
-        result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
-                                              x0=None)
+def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None, n=1):
+    for i in range(n):
+        path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{seed}.pickle'
+        if seed is None:
+            seed = rn.randint(0, 1000000)
+        try:
+            result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
+                                                  x0=True, seed=seed)
+        except FileNotFoundError:
+            print('Did not found x0')
+            result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
+                                                  x0=None)
 
-    pickle_out = open(path, 'wb')
-    pickle.dump(result, pickle_out)
-    pickle_out.close()
-    print(f'pickle with dim={dim}, dv={dv} and dilution={percentile}, seed={seed} successfully exported.')
+        pickle_out = open(path, 'wb')
+        pickle.dump(result, pickle_out)
+        pickle_out.close()
+        print(f'pickle with dim={dim}, dv={dv} and dilution={percentile}, seed={seed} successfully exported.')
+        seed = None
 
 
 parser = argparse.ArgumentParser(
@@ -31,11 +36,20 @@ parser.add_argument('--conv', choices=('True', 'False'), default='True',
                          'than becomes necessary')
 parser.add_argument('--n', type=int, default=1, help='number of times the minimization should happen')
 parser.add_argument('--s', type=int, default=None, help='Seed for dilution')
+parser.add_argument('--loop', choices=(0, 1), default=0, help='0 for False, 1 for True, runs over all seeds in '
+                                                              'seed_list.txt')
 args = parser.parse_args()
 
+# TODO: Diluted lattice (100 runs) for different dv
 if __name__ == '__main__':
-    export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s)
+    if args.loop==0:
+        export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s, args.n)
+    elif args.loop==1:
+        f = open('./seed_list.txt', 'r')
+        seeds = list(map(int, f.readlines()))
+        for i in seeds:
+            export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', i, args.n)
+        f.close()
 
-    dim=30
-    dv=10.0
-    p=5
+
+
