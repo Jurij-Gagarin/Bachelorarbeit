@@ -2,6 +2,7 @@ import hexagonal_lattice as hl
 import pickle
 import argparse
 import random as rn
+import numpy as np
 
 
 def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None, n=1):
@@ -42,14 +43,9 @@ args = parser.parse_args()
 
 # TODO: Diluted lattice (100 runs) for different dv
 if __name__ == '__main__':
-    if args.loop==0:
+    if args.loop == 0:
         export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s, args.n)
-    elif args.loop==1:
-        f = open('./seed_list.txt', 'r')
-        seeds = list(map(int, f.readlines()))
-        for i in seeds:
-            export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', i, args.n)
-        f.close()
-
-
-
+    elif args.loop == 1:
+        dvs = list(np.arange(2.5, args.dv + .5, .5))
+        for i in dvs:
+            export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s, args.n)
