@@ -7,7 +7,6 @@ import numpy as np
 
 def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None, n=1):
     for i in range(n):
-        path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{seed}.pickle'
         if seed is None:
             seed = rn.randint(0, 1000000)
         try:
@@ -18,11 +17,12 @@ def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None, n
             result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
                                                   x0=None)
 
+        path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{seed}.pickle'
         pickle_out = open(path, 'wb')
         pickle.dump(result, pickle_out)
         pickle_out.close()
         print(f'pickle with dim={dim}, dv={dv} and dilution={percentile}, seed={seed} successfully exported.'
-              f' {i} out of {n}')
+              f' {i+1} out of {n}')
         seed = None
 
 
