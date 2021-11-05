@@ -43,5 +43,4 @@ def create_seed_list():
     f.close()
 
 
-dvs = list(np.arange(2.5, 8.5 + .5, .5))
-print(dvs)
+

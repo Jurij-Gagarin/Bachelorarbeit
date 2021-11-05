@@ -37,8 +37,9 @@ parser.add_argument('--conv', choices=('True', 'False'), default='True',
                          'than becomes necessary')
 parser.add_argument('--n', type=int, default=1, help='number of times the minimization should happen')
 parser.add_argument('--s', type=int, default=None, help='Seed for dilution')
-parser.add_argument('--loop', choices=(0, 1), default=0, help='0 for False, 1 for True, runs over all seeds in '
-                                                              'seed_list.txt')
+parser.add_argument('--loop', type=int, choices=(0, 1), default=0,
+                    help='0 for False, 1 for True, runs over all seeds in '
+                         'seed_list.txt')
 args = parser.parse_args()
 
 # TODO: Diluted lattice (100 runs) for different dv
