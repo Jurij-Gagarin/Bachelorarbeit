@@ -21,7 +21,8 @@ def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None, n
         pickle_out = open(path, 'wb')
         pickle.dump(result, pickle_out)
         pickle_out.close()
-        print(f'pickle with dim={dim}, dv={dv} and dilution={percentile}, seed={seed} successfully exported.')
+        print(f'pickle with dim={dim}, dv={dv} and dilution={percentile}, seed={seed} successfully exported.'
+              f' {i} out of {n}')
         seed = None
 
 
@@ -49,4 +50,4 @@ if __name__ == '__main__':
     elif args.loop == 1:
         dvs = list(np.arange(2.5, args.dv + .5, .5))
         for i in dvs:
-            export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s, args.n)
+            export_pickle(args.dim, i, args.gtol, args.p, args.conv == 'True', args.s, args.n)
