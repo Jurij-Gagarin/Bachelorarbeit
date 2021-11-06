@@ -8,7 +8,7 @@ import numpy as np
 def export_pickle(dim, dv, gtol=1.e-3, percentile=0, converge=True, seed=None, n=1):
     for i in range(n):
         if seed is None:
-            seed = rn.randint(0, 1000000)
+            seed = rn.randint(0, 1000000000)
         try:
             result = hl.run_absolute_displacement(dim, dv, tol=gtol, percentile=percentile, true_convergence=converge,
                                                   x0=True, seed=seed)
@@ -48,6 +48,6 @@ if __name__ == '__main__':
     if args.loop == 0:
         export_pickle(args.dim, args.dv, args.gtol, args.p, args.conv == 'True', args.s, args.n)
     elif args.loop == 1:
-        dvs = list(np.arange(2.5, args.dv + .5, .5))
+        dvs = list(np.arange(args.dv, 2.5 - .5, -.5))
         for i in dvs:
             export_pickle(args.dim, i, args.gtol, args.p, args.conv == 'True', args.s, args.n)
