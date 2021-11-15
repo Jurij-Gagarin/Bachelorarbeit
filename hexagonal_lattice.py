@@ -7,6 +7,7 @@ import random as rn
 from scipy import optimize as opt
 import pickle
 import helpful_functions as hf
+import os
 
 
 class Node:
@@ -562,8 +563,13 @@ def run_sphere(dim, rad, dv=0, d=1, k=2, plot=False, method='CG', tol=1.e-3, per
     A = dilute_lattice_point(adjacency_matrix(l), percentile, l, seed)
 
     if x0:
-        path = f'./measurements/dim_25_0-30_0/dim={dim}_dv={dv}_perc=0_1.pickle'
-        x0 = pickle.load(open(path, 'rb')).x
+        path = f'./measurements/x0_sphere'
+        file_names = os.listdir(path)
+        for i in file_names:
+            if f'dv={dv}' in i and f'dim={dim}' in i:
+                x0 = pickle.load(open(path + '/' + i, 'rb')).x
+                print('Found x0 at \n ', path + '/' + i)
+                break
 
     res = minimize_energy_sphere(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func,
                                  rad=rad, dv=dv)
@@ -576,7 +582,7 @@ def run_sphere(dim, rad, dv=0, d=1, k=2, plot=False, method='CG', tol=1.e-3, per
         res2 = minimize_energy_sphere(lattice=l, d=d, k=k, method=method, tol=tol / 10 ** j, option=opt, x0=res.x,
                                       A=A, jac_func=jac_func, rad=rad, dv=dv)
         # print(res2.fun, res2.message, f'tol={tol / 10 ** j}')
-        while abs(1 - res2.fun / res.fun) > .001:
+        while abs(1 - res2.fun / res.fun) > .01:
 
             if not res2.success:
                 # print('Minimization failed, try to increase k')

@@ -40,7 +40,7 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
     pos = {}
     if sphere:
         list_mobile_coords = hl.run_sphere(dim, r, dv=displace_value, percentile=percentile, plot=False, seed=seed, d=d,
-                                           true_convergence=tg, tol=tol, k=k).x
+                                           true_convergence=tg, tol=tol, k=k, x0=x0).x
     else:
         res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
                                            , tol=tol, x0=x0, true_convergence=tg, seed=seed)
@@ -155,7 +155,6 @@ def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, 
     if sphere:
         ls = hl.create_lattice_sphere2(dim, r**2, displace_value, d)
         l = ls[0]
-        #l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=-displace_value-r)
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile, l, seed)
     A = np.add(matrices[0], matrices[1])
 
@@ -213,7 +212,7 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.show()
 
 
-# TODO:
-d = 3**.5*40*10**(0)
-#plot_graph(25, r=d*3, displace_value=d*10, percentile=5, x0=None, tg=True, sphere=True, d=d, k=10/d**2)
+# d = 3**.5*40*10**(0)
+d = 70
+plot_graph(25, r=d*3, displace_value=d*3, percentile=10, x0=True, tg=True, sphere=True, d=d, k=10/d**2)
 # fit_contour(5, 50, 10.0)
