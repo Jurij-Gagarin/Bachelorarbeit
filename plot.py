@@ -215,5 +215,5 @@ def fit_contour(min_dim, max_dim, disp_value):
 
 # TODO:
 d = 3**.5*40*10**(0)
-plot_graph(25, r=d*3, displace_value=d*10, percentile=5, x0=None, tg=True, sphere=True, d=d, k=10/d**2)
+#plot_graph(25, r=d*3, displace_value=d*10, percentile=5, x0=None, tg=True, sphere=True, d=d, k=10/d**2)
 # fit_contour(5, 50, 10.0)
