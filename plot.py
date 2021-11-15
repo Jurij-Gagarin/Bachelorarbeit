@@ -39,7 +39,8 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
                                         percentile=0, tol=1.e-06, x0=None, tg=True, seed=None):
     pos = {}
     if sphere:
-        list_mobile_coords = hl.run_sphere(dim, r, dv=displace_value, percentile=percentile, plot=False, seed=seed).x
+        list_mobile_coords = hl.run_sphere(dim, r, dv=displace_value, percentile=percentile, plot=False, seed=seed, d=d,
+                                           true_convergence=tg, tol=tol, k=k).x
     else:
         res = hl.run_absolute_displacement(dim, displace_value, d=d, k=k, method=method, percentile=percentile, opt=opt
                                            , tol=tol, x0=x0, true_convergence=tg, seed=seed)
@@ -106,7 +107,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0,
             z = -rad * np.cos(v) - dv
             print(ax.get_xlim())
             print(ax.get_xlim()[0], ax.get_xlim()[1])
-            ax.set_zlim(-16, 0)
+            #ax.set_zlim(-300, 0)
             ax.plot_wireframe(x, y, z, color="green", alpha=.2)
 
         for i, j in enumerate(G.edges()):
@@ -132,6 +133,7 @@ def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0,
     ax.view_init(10, 30)
     # Hide the axes
     # ax.set_axis_off()
+    hf.set_axes_equal(ax)
     ax.set_xlabel('x', fontsize=25)
     ax.set_ylabel('y', fontsize=25)
     ax.set_zlabel('z', fontsize=25)
@@ -151,7 +153,7 @@ def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, 
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
     if sphere:
-        ls = hl.create_lattice_sphere(dim, r, displace_value, d)
+        ls = hl.create_lattice_sphere2(dim, r**2, displace_value, d)
         l = ls[0]
         #l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=-displace_value-r)
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile, l, seed)
@@ -162,7 +164,7 @@ def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, 
                                                                   displace_value=displace_value, sphere=sphere,
                                                                   d=d, k=k, method=method, percentile=percentile,
                                                                   opt=opt, tol=tol, x0=x0, tg=tg, seed=seed),
-                       l, nodes=nodes, dv=displace_value, rad=r, draw_sphere=sphere)
+                       l, nodes=nodes, dv=displace_value, rad=r, draw_sphere=sphere, d=d)
 
 
 def import_pickle(path):
@@ -210,6 +212,8 @@ def fit_contour(min_dim, max_dim, disp_value):
     plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
     plt.show()
 
+
 # TODO:
-# plot_graph(20, r=3, displace_value=3, percentile=5, x0=None, tg=True, sphere=True)
+d = 3**.5*40*10**(0)
+plot_graph(25, r=d*3, displace_value=d*10, percentile=5, x0=None, tg=True, sphere=True, d=d, k=10/d**2)
 # fit_contour(5, 50, 10.0)

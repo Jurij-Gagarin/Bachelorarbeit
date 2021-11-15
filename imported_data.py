@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from math import floor, log10, sqrt
 from scipy.optimize import curve_fit
 import helpful_functions as hf
+import os
 
 
 def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None):
@@ -153,8 +154,16 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.show()
 
 
+def make_x4(b):
+    x0 = b
+
+    def x4(x, a):
+        return a*(x-x0)**4
+    return x4
+
+
 def x4(x, a):
-    return a*x**4
+    return a*(x)**4
 
 
 def plot_energy_vs_dv(dim, min_dv, max_dv, dv_step=.5, perc=0):
@@ -201,15 +210,98 @@ def energy_dil_lattice(path, dim, dv, perc):
     return energy
 
 
-dim = 20
-dv = 5.0
-perc = 5
+def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
+    file_names = os.listdir(path)
+    fig, ax = plt.subplots(figsize=[15, 10])
+    color = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue', 'orange',
+             'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+    e_module = []
+    e_module_error = []
+
+    for p in ps:
+        mean_energy = []
+        standard_deviation = []
+        del_index = []
+        for d in range(len(dvs)):
+            energy = []
+            count = 0
+            for i in file_names:
+                if f'dv={dvs[d]}' in i and f'perc={p}' in i:
+                    energy.append(pickle.load(open(path + '/' + i, 'rb')).fun)
+                    count += 1
+
+            if not energy:
+                ener = 0
+            else:
+                ener = np.mean(energy)
+
+            if ener > 0:
+                mean_energy.append(ener)
+                standard_deviation.append(1*np.std(energy)/len(energy)**.5)
+            else:
+                del_index.append(d)
+            print(f'p={p}, d={d}, number of measurements {count}')
+        dvsc = np.delete(dvs, del_index)
+        if len(del_index) == 0:
+            del_index.append(-1)
+
+        pars, cov = curve_fit(x4, dvsc, mean_energy)#, sigma=standard_deviation)
+        x0 = dvs[del_index[0]]
+        if p==0: x0=0
+        #pars, cov = curve_fit(make_x4(x0), dvsc, mean_energy)  # , sigma=standard_deviation)
+        e_module.append(pars[0])
+        e_module_error.append(np.sqrt(np.diag(cov))[0])
+        if plot_energy:
+            ax.scatter(dvsc, mean_energy, c=color[0])
+            plt.errorbar(dvsc, mean_energy, yerr=standard_deviation, xerr=0, fmt='none', ecolor=color[0], capsize=5)
+            color.pop(0)
+            x = np.linspace(dvsc[0], dvsc[-1], num=100)
+            fit = []
+            for i in x:
+                fit.append(x4(i, pars[0]))
+            ax.plot(x, fit, label=rf'p={2*p}%: a={hf.round_sig(pars[0])}, $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}$ ')
+                                  #rf'b={hf.round_sig(pars[1])}') #label=rf'p={2*p/100}%: $a={hf.round_sig(pars[0])}, b={hf.round_sig(pars[1])}$,'
+                                  #rf' $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}, \Delta b={hf.round_sig(np.sqrt(np.diag(cov))[1])}$')
+
+    if plot_energy:
+        ax.set_title('Mittlere minimale Energie aufgetragen gegen dv, für verschiedene p', size=20)
+        ax.set_ylabel('Mittlere minimale Energie in J', size=20)
+        ax.set_xlabel('dv in Vielfachen von d', size=20)
+        ax.legend(fontsize=20)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
+        plt.show()
+
+    if plot_e_module:
+        ax.set_title('E-Module eines Gitters für verschiedene Verdünnungen', size=20)
+        ax.set_ylabel('E-Modul in J/m', size=20)
+        ax.set_xlabel('p in Prozent', size=20)
+        for i in range(len(ps)):
+            ps[i] = ps[i]*2
+        ax.scatter(ps, e_module, c='black')
+        plt.errorbar(ps, e_module, yerr=e_module_error, xerr=0, fmt='none', ecolor='black', capsize=5)
+        plt.show()
+
+    return e_module, e_module_error
+
+
+
+
+
+
+
+dvs = list(np.arange(15.0, 2.5-.5, -.5))
+#ps = [0.0, 0.5, 1.5, 5.0, 10.0]
+ps = [0.0, 0.5, 1.0, 1.5, 2.5, 3.75, 5.0, 6.0, 7.5, 9.0, 10.0]
 seed = 122775
 n = 0
-path = '/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_20_5.0_5/'
+path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell'
+print(diluted_lattice(dvs, ps, path, plot_e_module=False, plot_energy=True))
+
+
 # path = f'/home/jurij/Python/Physik/Bachelorarbeit/current_measurements/dim={dim}_dv={dv}_perc={perc}_{seed}.pickle'
 # path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_20_5.0_5/dim=20_dv=5.0_perc=5_{seed}.pickle'
 # single_plot_from_pickle(dim, dv, path, perc, seed, max_dist=0.11055606682194574)
-print(energy_dil_lattice(path, dim, dv, perc))
+# print(energy_dil_lattice(path, dim, dv, perc))
 
 
