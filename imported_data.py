@@ -10,10 +10,12 @@ import helpful_functions as hf
 import os
 
 
-def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None):
+def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None, sphere=False, rad=0):
     ls = hl.create_lattice(dim, d)
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=dv)
+    if sphere:
+        l=hl.create_lattice_sphere2(dim, rad**2, dv, d)[0]
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), perc, l, seed)
     A = np.add(matrices[0], matrices[1])
     pos = {}
@@ -293,15 +295,21 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
 dvs = list(np.arange(15.0, 2.5-.5, -.5))
 #ps = [0.0, 0.5, 1.5, 5.0, 10.0]
 ps = [0.0, 0.5, 1.0, 1.5, 2.5, 3.75, 5.0, 6.0, 7.5, 9.0, 10.0]
-seed = 122775
-n = 0
+
 path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell'
-print(diluted_lattice(dvs, ps, path, plot_e_module=False, plot_energy=True))
+#print(diluted_lattice(dvs, ps, path, plot_e_module=False, plot_energy=True))
 
 
 # path = f'/home/jurij/Python/Physik/Bachelorarbeit/current_measurements/dim={dim}_dv={dv}_perc={perc}_{seed}.pickle'
 # path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_20_5.0_5/dim=20_dv=5.0_perc=5_{seed}.pickle'
 # single_plot_from_pickle(dim, dv, path, perc, seed, max_dist=0.11055606682194574)
 # print(energy_dil_lattice(path, dim, dv, perc))
+d=70
+dim=20
+dv=525.0
+seed=936490265
+perc=5.0
+path = f'/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere/dim={dim}_dv={dv}_perc={perc}_{seed}.pickle'
+single_plot_from_pickle(20, 7.5*d, path, 2.0, seed, sphere=True, rad=3*d, d=d)
 
 

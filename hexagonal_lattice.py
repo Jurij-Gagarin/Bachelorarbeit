@@ -570,7 +570,7 @@ def run_sphere(dim, rad, dv=0, d=1, k=2, plot=False, method='CG', tol=1.e-3, per
                 x0 = pickle.load(open(path + '/' + i, 'rb')).x
                 print('Found x0 at \n ', path + '/' + i)
                 break
-        if type(x0) == bool:
+        if isinstance(x0, bool):
             print('Did not found x0. Proceed with x0=None')
             x0 = None
 
