@@ -30,13 +30,9 @@ def export_pickle_sphere(dim, r, dv, gtol=1.e-3, percentile=0, converge=True, se
     for i in range(n):
         if seed is None:
             seed = rn.randint(0, 1000000000)
-        try:
-            result = hl.run_sphere(dim, rad=r, dv=dv, tol=gtol, percentile=percentile, true_convergence=converge,
+
+        result = hl.run_sphere(dim, rad=r, dv=dv, tol=gtol, percentile=percentile, true_convergence=converge,
                                    x0=True, seed=seed, d=d, k=10/d**2)
-        except FileNotFoundError:
-            print('Did not found x0')
-            result = hl.run_sphere(dim, rad=r, dv=dv, tol=gtol, percentile=percentile, true_convergence=converge,
-                                   x0=None, d=d, k=10/d**2)
 
         path = f'./current_measurements/dim={dim}_dv={dv}_perc={percentile}_{seed}.pickle'
         pickle_out = open(path, 'wb')

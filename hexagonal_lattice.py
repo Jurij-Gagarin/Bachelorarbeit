@@ -570,6 +570,9 @@ def run_sphere(dim, rad, dv=0, d=1, k=2, plot=False, method='CG', tol=1.e-3, per
                 x0 = pickle.load(open(path + '/' + i, 'rb')).x
                 print('Found x0 at \n ', path + '/' + i)
                 break
+        if type(x0) == bool:
+            print('Did not found x0. Proceed with x0=None')
+            x0 = None
 
     res = minimize_energy_sphere(lattice=l, d=d, k=k, method=method, tol=tol, option=opt, x0=x0, A=A, jac_func=jac_func,
                                  rad=rad, dv=dv)
