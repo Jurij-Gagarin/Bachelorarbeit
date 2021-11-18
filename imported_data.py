@@ -438,7 +438,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
             color.pop(0)
 
     if plot_energy:
-        ax.set_title('Energie durch Kugeln ausgelenkter, verdünnter Gitter', size=20)
+        ax.set_title('Energie durch Kugeln (r=3*d) ausgelenkter, verdünnter Gitter', size=20)
         ax.set_ylabel(r'$U / U_{p=0}(dv=0)$', size=20)
         ax.set_xlabel('dv in nm', size=20)
         ax.legend(fontsize=15)
@@ -466,7 +466,7 @@ def fit_e_module(dilutions, e_module, e_module_error):
     ax.plot(x_fit, fit, label=rf'Linearer Fit $E/E_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
 
     ax.grid()
-    ax.set_title('E-Module durch Kugeln ausgelenkter verdünnter Gitter', size=20)
+    ax.set_title('E-Module durch Kugeln (r=3*d) ausgelenkter verdünnter Gitter', size=20)
     ax.set_ylabel(r'$E / E_0$', size=20)
     ax.set_xlabel('p in %', size=20)
     ax.legend(fontsize=15)
@@ -479,5 +479,5 @@ path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere/'
 # a, b, c = mean_energy_vs_dv(path)
 # a, b, c = fit_energy(a, b, c)
 # fit_e_module(a, b, c)
-# print(np.arange(.5, 4.5+0.5, +1))
+# print(np.arange(7.5, 0-.5, -.5))
 
