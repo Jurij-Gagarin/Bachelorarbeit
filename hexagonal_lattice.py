@@ -353,6 +353,18 @@ def energy_func_prep(A, As, d):
     return mrows, mcols, imrows, imcols, e
 
 
+def sigmoid_prep(r_list, r_dict, mrows, rad2):
+    smallest_r = rad2
+    smallest_r_index = None
+    for i in mrows:
+        dis_node = r_list[r_dict[i]]**2 + r_list[r_dict[i]+1]**2
+        if dis_node < smallest_r:
+            smallest_r = dis_node
+            smallest_r_index = i
+    if smallest_r_index is not None: return smallest_r_index
+    else: print('Sphere slips through lattice. Energy = 0.')
+
+
 def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, k):
     # calculates lattice energy (optimized).
     total_energy = 0
@@ -660,7 +672,12 @@ if __name__ == '__main__':
     #plot_lattice(l)
     #print(run_sphere(dim, r, dv, plot=True))
     #print(check_gradient(15, 3, 5, 0))
-
+    l2 = create_lattice_sphere2(20, 2 ** 2, 2, 1)
+    adj = adjacency_matrix(l2[0])
+    dil_adj = dilute_lattice(adj, 50)
+    mrows = energy_func_prep(dil_adj[0], dil_adj[1], 1)[0]
+    xs, x, xsdict, xdict = list_of_coordinates(l2[0])
+    print(sigmoid_prep(x, xdict, mrows, 2), l2[1])
 
     '''
     The following will perform a simple lattice minimization. You can create a simple plot with setting 
