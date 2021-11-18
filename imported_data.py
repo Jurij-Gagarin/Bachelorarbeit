@@ -338,25 +338,11 @@ def simulation_results(path):
     # creates a list of all simulations in the directory that path leads to
     file_names = os.listdir(path)
     simulations = []
-    dv_dir = {}
-    p_dir = {}
-    dim_dir = {}
 
-    # create dictionaries to find every simulation to certain set of simulation parameters
     for i, f in enumerate(file_names):
         simulations.append(Simulation(f'{path}/{f}'))
-        values = value_from_path(f)
-        if values[0] not in dim_dir.keys():
-            dim_dir[values[0]] = [i]
-        if values[1] not in dv_dir.keys():
-            dv_dir[values[1]] = [i]
-        if values[2] not in p_dir.keys():
-            p_dir[values[2]] = [i]
-        p_dir[values[2]].append(i)
-        dv_dir[values[1]].append(i)
-        dim_dir[values[0]].append(i)
 
-    return simulations, p_dir, dv_dir, dim_dir
+    return simulations
 
 
 def analyze_result(simulations):
@@ -385,7 +371,7 @@ def energy_by_parameters(simulations, parameter):
 
 def mean_energy_vs_dv(path):
     # Load simulations from file
-    simulations = simulation_results(path)[0]
+    simulations = simulation_results(path)
     # Extract simulation parameters
     dif_paras = analyze_result(simulations)
 
@@ -488,5 +474,5 @@ def e_module(mean_energy, energy_std, dif_paras, plot_energy=False, plot_e_modul
 
 path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere/'
 a, b, c = mean_energy_vs_dv(path)
-e_module(a, b, c, False, False)
+e_module(a, b, c, False, True)
 
