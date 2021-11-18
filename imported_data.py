@@ -395,8 +395,9 @@ def a_x(x, a, b):
     return a*x + b
 
 
-def e_module(mean_energy, energy_std, dif_paras, plot_energy=False, plot_e_module=False):
-    fig, ax = plt.subplots(figsize=[15, 10])
+def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
+    if plot_energy:
+        fig, ax = plt.subplots(figsize=[15, 10])
     color = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue', 'orange',
              'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
     # Extract all measured dilutions
@@ -447,32 +448,36 @@ def e_module(mean_energy, energy_std, dif_paras, plot_energy=False, plot_e_modul
         plt.legend(fontsize=15)
         plt.show()
 
-    if plot_e_module:
-        dilutions = [2*d for d in dilutions]
-        e0 = e_module[0]
-        e_module = [e/e0 for e in e_module]
-        e_module_error = [e/e0 for e in e_module_error]
-        ax.errorbar(dilutions, e_module, yerr=e_module_error, fmt='none', capsize=5)
-        ax.scatter(dilutions, e_module, label='Simulationsdaten')
-
-        pars, cov = curve_fit(a_x, dilutions, e_module, sigma=e_module_error)
-        x_fit = np.linspace(min(dilutions), max(dilutions), num=100)
-        fit = [a_x(i, pars[0], pars[1]) for i in x_fit]
-        ax.plot(x_fit, fit, label=rf'Linearer Fit $E/E_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
-
-        ax.grid()
-        ax.set_title('E-Module durch Kugeln ausgelenkter verdünnter Gitter', size=20)
-        ax.set_ylabel(r'$E / E_0$', size=20)
-        ax.set_xlabel('p in %', size=20)
-        ax.legend(fontsize=15)
-        ax.tick_params(axis="x", labelsize=15)
-        ax.tick_params(axis="y", labelsize=15)
-        plt.show()
-
     return dilutions, e_module, e_module_error
 
 
+def fit_e_module(dilutions, e_module, e_module_error):
+    fig, ax = plt.subplots(figsize=[15, 10])
+    dilutions = [2*d for d in dilutions]
+    e0 = e_module[0]
+    e_module = [e/e0 for e in e_module]
+    e_module_error = [e/e0 for e in e_module_error]
+    ax.errorbar(dilutions, e_module, yerr=e_module_error, fmt='none', capsize=5)
+    ax.scatter(dilutions, e_module, label='Simulationsdaten')
+
+    pars, cov = curve_fit(a_x, dilutions, e_module, sigma=e_module_error)
+    x_fit = np.linspace(min(dilutions), max(dilutions), num=100)
+    fit = [a_x(i, pars[0], pars[1]) for i in x_fit]
+    ax.plot(x_fit, fit, label=rf'Linearer Fit $E/E_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
+
+    ax.grid()
+    ax.set_title('E-Module durch Kugeln ausgelenkter verdünnter Gitter', size=20)
+    ax.set_ylabel(r'$E / E_0$', size=20)
+    ax.set_xlabel('p in %', size=20)
+    ax.legend(fontsize=15)
+    ax.tick_params(axis="x", labelsize=15)
+    ax.tick_params(axis="y", labelsize=15)
+    plt.show()
+
+
 path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere/'
-a, b, c = mean_energy_vs_dv(path)
-e_module(a, b, c, False, True)
+# a, b, c = mean_energy_vs_dv(path)
+# a, b, c = fit_energy(a, b, c)
+# fit_e_module(a, b, c)
+# print(np.arange(.5, 4.5+0.5, +1))
 
