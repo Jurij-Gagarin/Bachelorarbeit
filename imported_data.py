@@ -290,6 +290,7 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
 
 
 def value_from_path(path):
+    end_of_seed = None
     start_index = []
     end_index = []
     values = []
@@ -402,6 +403,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
              'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
     # Extract all measured dilutions
     dilutions = list(set([x[2] for x in dif_paras]))
+    dilutions = np.sort(dilutions)
     e_module = []
     e_module_error = []
 
@@ -475,9 +477,9 @@ def fit_e_module(dilutions, e_module, e_module_error):
     plt.show()
 
 
-path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere/'
-# a, b, c = mean_energy_vs_dv(path)
-# a, b, c = fit_energy(a, b, c)
-# fit_e_module(a, b, c)
+path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r3 (copy)'
+a, b, c = mean_energy_vs_dv(path)
+a, b, c = fit_energy(a, b, c, True)
+fit_e_module(a, b, c)
 # print(np.arange(7.5, 0-.5, -.5))
 

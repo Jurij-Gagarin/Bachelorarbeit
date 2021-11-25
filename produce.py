@@ -73,7 +73,7 @@ if __name__ == '__main__':
         export_pickle_sphere(args.dim, args.r*args.d, args.dv*args.d, args.gtol, args.p, args.conv == 'True', args.s,
                              args.n, args.d)
     elif args.loop == 1 and args.r is not None:
-        dvs = list(np.arange(args.dv, 0-.5, -.5))
+        dvs = list(np.arange(args.dv, 0, +.5))
         for i in dvs:
             export_pickle_sphere(args.dim, args.r*args.d, i*args.d, args.gtol, args.p, args.conv == 'True', args.s,
                                  args.n, args.d)
