@@ -664,14 +664,6 @@ def number_of_links(dim):
 
 if __name__ == '__main__':
     # In here you can run this module
-    #print(check_gradient(15, 3, 0, 0))
-    #d=3**.5*40*10**(0)
-    #d=1
-    #l = create_lattice_sphere2(25, (d*1)**2, d*0, d=d)[0]
-    #l=create_lattice(26, d)[0]
-    #plot_lattice(l)
-    #print(run_sphere(dim, r, dv, plot=True))
-    #print(check_gradient(15, 3, 5, 0))
     l2 = create_lattice_sphere2(20, 2 ** 2, 2, 1)
     adj = adjacency_matrix(l2[0])
     dil_adj = dilute_lattice(adj, 50)
@@ -684,5 +676,3 @@ if __name__ == '__main__':
     plot to True. If you are not interest in the entire minimization message, you can print res.x for 
     the coordinates and res.fun for the minimal energy.
     '''
-    # res = run_absolute_displacement(dim, displace_value, plot=False)
-    # print(res)

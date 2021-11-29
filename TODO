@@ -5,10 +5,10 @@ TODO-list
 -Gitter mit gleicher Verdünnung verschieden stark auslenken, dann dv gegen E auftragen
 -großes Gitter (dim=30) mit über viele dv auslenekn (0-15 in .5 Schritten
 
-ssh jurijrudos99@zoe.physik.fu-berlin.de
+ssh jurijrudos99@animal.physik.fu-berlin.de
 git clone https://github.com/Jurij-Gagarin/Bachelorarbeit.git
 rm -rf Bachelorarbeit
-scp -r jurijrudos99@zoe.physik.fu-berlin.de:/home/jurijrudos99/bachelor-thesis/Bachelorarbeit/current_measurements /home/jurij
+scp -r jurijrudos99@animal.physik.fu-berlin.de:/home/jurijrudos99/bachelor-thesis/Bachelorarbeit/current_measurements /home/jurij
 
 for i in $(cat seed_list.txt)
 do

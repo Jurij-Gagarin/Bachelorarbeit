@@ -365,7 +365,7 @@ def energy_by_parameters(simulations, parameter):
     # Calculate the energy of the simulation with the wanted parameters
     energy = []
     for sim in simulations:
-        if sim.energy > .1:
+        if sim.energy > .1 or sim.dv <= 0:
             energy.append(sim.energy)
     return energy
 
@@ -388,8 +388,8 @@ def mean_energy_vs_dv(path):
     return mean_energy, energy_std, dif_paras
 
 
-def x4b(x, a, b):
-    return a*x**2 + b
+def x4b(x, a):
+    return a*x**3
 
 
 def a_x(x, a, b):
@@ -404,6 +404,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
     # Extract all measured dilutions
     dilutions = list(set([x[2] for x in dif_paras]))
     dilutions = np.sort(dilutions)
+    # dilutions = [0.0, 1.0, 2.5, 5.0]
     e_module = []
     e_module_error = []
 
@@ -414,7 +415,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
         for i, par in enumerate(dif_paras):
             if dil == par[2]:
                 y.append(mean_energy[i])
-                x.append(par[1])
+                x.append(par[1]+210)
                 y_error.append(energy_std[i])
 
         if dil == 0.0:
@@ -427,27 +428,26 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
         else:
             y = [yi / y0 for yi in y]
             y_error = [ye / y0 for ye in y_error]
-            pars, cov = curve_fit(x4b, x, y, sigma=y_error)
+            pars, cov = curve_fit(x4b, x, y)#, sigma=y_error)
             e_module.append(pars[0])
             e_module_error.append(np.sqrt(np.diag(cov))[0])
 
         if plot_energy:
             ax.errorbar(x, y, yerr=y_error, fmt='none', c=color[0], capsize=5)
-            ax.scatter(x, y, label=rf'p={2*dil}%, Fit$={hf.round_sig(pars[0])}x^2+{hf.round_sig(pars[1])}$', c=color[0])
+            ax.scatter(x, y, label=rf'p={2*dil}%, Fit$={hf.round_sig(pars[0])}x^2$', c=color[0])
             x_fit = np.linspace(min(x), max(x), num=100)
-            fit = [x4b(i, pars[0], pars[1]) for i in x_fit]
+            fit = [x4b(i, pars[0]) for i in x_fit]
             ax.plot(x_fit, fit, c=color[0])
             color.pop(0)
 
     if plot_energy:
-        ax.set_title('Energie durch Kugeln (r=3*d) ausgelenkter, verdünnter Gitter', size=20)
+        ax.set_title('Energie durch Kugeln (r=210nm) ausgelenkter, verdünnter Gitter', size=20)
         ax.set_ylabel(r'$U / U_{p=0}(dv=0)$', size=20)
         ax.set_xlabel('dv in nm', size=20)
-        ax.legend(fontsize=15)
+        ax.legend(fontsize=20)
         ax.tick_params(axis="x", labelsize=15)
         ax.tick_params(axis="y", labelsize=15)
         ax.grid()
-        plt.legend(fontsize=15)
         plt.show()
 
     return dilutions, e_module, e_module_error
@@ -468,18 +468,19 @@ def fit_e_module(dilutions, e_module, e_module_error):
     ax.plot(x_fit, fit, label=rf'Linearer Fit $E/E_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
 
     ax.grid()
-    ax.set_title('E-Module durch Kugeln (r=3*d) ausgelenkter verdünnter Gitter', size=20)
+    ax.set_title('E-Module durch Kugeln (r=210nm) ausgelenkter verdünnter Gitter', size=20)
     ax.set_ylabel(r'$E / E_0$', size=20)
     ax.set_xlabel('p in %', size=20)
-    ax.legend(fontsize=15)
+    ax.legend(fontsize=20)
     ax.tick_params(axis="x", labelsize=15)
     ax.tick_params(axis="y", labelsize=15)
     plt.show()
 
 
-path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r3 (copy)'
-a, b, c = mean_energy_vs_dv(path)
-a, b, c = fit_energy(a, b, c, True)
-fit_e_module(a, b, c)
-# print(np.arange(7.5, 0-.5, -.5))
+if __name__ == '__main__':
+    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r3 (copy)'
+    a, b, c = mean_energy_vs_dv(path)
+    a, b, c = fit_energy(a, b, c, True)
+    fit_e_module(a, b, c)
+
 
