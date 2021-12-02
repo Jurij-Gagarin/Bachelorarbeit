@@ -4,7 +4,7 @@ import numpy as np
 import plot
 import pickle
 import matplotlib.pyplot as plt
-from math import floor, log10, sqrt
+from math import floor, log10, sqrt, cosh
 from scipy.optimize import curve_fit
 import helpful_functions as hf
 import os
@@ -388,8 +388,14 @@ def mean_energy_vs_dv(path):
     return mean_energy, energy_std, dif_paras
 
 
-def x4b(x, a):
-    return a*x**3
+def x4b(x, a, b):
+    return a*x**b
+
+
+def make_x4(b):
+    def x4(x, a):
+        return a*x**b
+    return x4
 
 
 def a_x(x, a, b):
@@ -404,9 +410,11 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
     # Extract all measured dilutions
     dilutions = list(set([x[2] for x in dif_paras]))
     dilutions = np.sort(dilutions)
-    # dilutions = [0.0, 1.0, 2.5, 5.0]
+    # dilutions = [0.0, 1.0, 2.0, 5.0]
     e_module = []
     e_module_error = []
+    # p0=[.001]
+    p0 = None
 
     for dil in dilutions:
         y = []
@@ -422,21 +430,22 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
             y0 = y[0]
             y = [yi / y0 for yi in y]
             y_error = [ye / y0 for ye in y_error]
-            pars, cov = curve_fit(x4b, x, y)
+            pars, cov = curve_fit(x4b, x, y, p0=p0)
             e_module.append(pars[0])
             e_module_error.append(np.sqrt(np.diag(cov))[0])
+            b=pars[1]
         else:
             y = [yi / y0 for yi in y]
             y_error = [ye / y0 for ye in y_error]
-            pars, cov = curve_fit(x4b, x, y)#, sigma=y_error)
+            pars, cov = curve_fit(make_x4(b), x, y)#, sigma=y_error)
             e_module.append(pars[0])
             e_module_error.append(np.sqrt(np.diag(cov))[0])
 
         if plot_energy:
             ax.errorbar(x, y, yerr=y_error, fmt='none', c=color[0], capsize=5)
-            ax.scatter(x, y, label=rf'p={2*dil}%, Fit$={hf.round_sig(pars[0])}x^2$', c=color[0])
+            ax.scatter(x, y, label=rf'p={2*dil}%, Fit$={hf.round_sig(pars[0])}x^{hf.round_sig(b)}$', c=color[0])
             x_fit = np.linspace(min(x), max(x), num=100)
-            fit = [x4b(i, pars[0]) for i in x_fit]
+            fit = [x4b(i, pars[0], b) for i in x_fit]
             ax.plot(x_fit, fit, c=color[0])
             color.pop(0)
 
