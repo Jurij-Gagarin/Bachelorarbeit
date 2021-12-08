@@ -215,6 +215,6 @@ def fit_contour(min_dim, max_dim, disp_value):
 if __name__ == '__main__':
     # d = 3**.5*40*10**(0)
     d = 70
-    seed = 936490265
-    # plot_graph(20, r=d*3, displace_value=-3*d, percentile=0, x0=True, tg=True, sphere=True, seed=seed, d=d, k=10/d**2)
+    seed = None
+    plot_graph(20, r=d*4, displace_value=10*d, percentile=0, x0=True, tg=True, sphere=True, seed=seed, d=d, k=1000/d**2)
     # fit_contour(5, 50, 10.0)

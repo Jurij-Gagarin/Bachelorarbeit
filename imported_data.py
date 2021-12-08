@@ -32,7 +32,13 @@ def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None
             vector = l[i].return_coordinates()
             pos[i] = (vector[0], vector[1], vector[2])
 
-    plot.draw_initial_graph(A, 22, pos, l, max_dist=max_dist)
+    plot.draw_initial_graph(A, 22, pos, l, dv=dv, rad=rad, draw_sphere=sphere, d=d, max_dist=max_dist)
+
+
+path = '/home/jurij/Python/Physik/Bachelorarbeit/current_measurements/dim=20_dv=175.0_perc=1.0_357618818.pickle'
+seed = 357618818
+d = 70
+#single_plot_from_pickle(20, 175.0, path, 1.0, seed, d, sphere=True, rad=2*d)
 
 
 def print_convergence(dim, dv, gtol=1.e-10, perc=0):
@@ -41,25 +47,37 @@ def print_convergence(dim, dv, gtol=1.e-10, perc=0):
     print(obj)
 
 
-def plot_energy_convergence(dv, min_d, max_d):
+def plot_energy_convergence(dvs, min_d, max_d):
+    fig, ax = plt.subplots(figsize=[15, 10])
     energy = np.zeros(max_d - min_d + 1)
     dims = list(range(min_d, max_d + 1))
-    for i in range(min_d, max_d + 1):
-        path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={i}_dv={dv}_perc=0.pickle'
-        pic = pickle.load(open(path, 'rb'))
-        energy[i - min_d] = pic.fun
-        if not pic.success:
-            print(pic.message, f'dim={i}')
+    for dv in dvs:
+        for i in range(min_d, max_d + 1):
+            path = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={i}_dv={dv}_perc=0.pickle'
+            pic = pickle.load(open(path, 'rb'))
+            energy[i - min_d] = pic.fun
+            if not pic.success:
+                print(pic.message, f'dim={i}')
 
-    fig, ax = plt.subplots(figsize=[15, 10])
-    ax.scatter(dims, energy, label='Daten')
-    ax.set_title('Minimale Energie aufgetragen gegen dim', size=20)
+        fit_func = lambda x, a: a / x ** 2
+        pars, cov = curve_fit(fit_func, dims, energy)
+
+        ss_res = np.sum((energy - [fit_func(dim, pars[0]) for dim in dims])**2)
+        ss_tot = np.sum((energy - np.mean(energy)) ** 2)
+        r2 = round(1 - (ss_res / ss_tot), 2)
+
+        fit = [fit_func(i, pars[0]) for i in dims]
+        ax.plot(dims, fit, label=r'Theorie: $\frac{\lambda\delta^4}{a^2}$' + ', ' + r'$\lambda=$' +
+                                 f'{hf.round_sig(pars[0] / dv ** 4)}' + r'$\pm$' +
+                                 f'{hf.round_sig(sqrt(cov) / dv ** 4, 1)}' +
+                                 rf'N/m, $R^2={r2}$')
+        ax.scatter(dims, energy, label=rf'Simulationsdaten, $\delta={dv}$')
+    ax.set_title(r'Minimale Energie aufgetragen gegen dim für verschiedene $\delta$', size=20)
     ax.set_ylabel('Minimale Energie in J', size=20)
     ax.set_xlabel('dim', size=20)
-    ax.legend(fontsize=15)
+    ax.legend(fontsize=20)
     ax.tick_params(axis="x", labelsize=15)
     ax.tick_params(axis="y", labelsize=15)
-    ax.set_aspect(.2)
     plt.show()
 
 
@@ -304,8 +322,8 @@ def value_from_path(path):
             end_of_seed = i
 
     for i, index in enumerate(start_index):
-        values.append(path[index+1:end_index[i]])
-    values.append(path[end_index[-1]+1:end_of_seed])
+        values.append(path[index + 1:end_index[i]])
+    values.append(path[end_index[-1] + 1:end_of_seed])
     return values
 
 
@@ -389,17 +407,18 @@ def mean_energy_vs_dv(path):
 
 
 def x4b(x, a, b):
-    return a*x**b
+    return a * x ** b
 
 
 def make_x4(b):
     def x4(x, a):
-        return a*x**b
+        return a * x ** b
+
     return x4
 
 
 def a_x(x, a, b):
-    return a*x + b
+    return a * x + b
 
 
 def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
@@ -423,7 +442,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
         for i, par in enumerate(dif_paras):
             if dil == par[2]:
                 y.append(mean_energy[i])
-                x.append(par[1]+210)
+                x.append(par[1] + 210)
                 y_error.append(energy_std[i])
 
         if dil == 0.0:
@@ -433,17 +452,17 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
             pars, cov = curve_fit(x4b, x, y, p0=p0)
             e_module.append(pars[0])
             e_module_error.append(np.sqrt(np.diag(cov))[0])
-            b=pars[1]
+            b = pars[1]
         else:
             y = [yi / y0 for yi in y]
             y_error = [ye / y0 for ye in y_error]
-            pars, cov = curve_fit(make_x4(b), x, y)#, sigma=y_error)
+            pars, cov = curve_fit(make_x4(b), x, y)  # , sigma=y_error)
             e_module.append(pars[0])
             e_module_error.append(np.sqrt(np.diag(cov))[0])
 
         if plot_energy:
             ax.errorbar(x, y, yerr=y_error, fmt='none', c=color[0], capsize=5)
-            ax.scatter(x, y, label=rf'p={2*dil}%, Fit$={hf.round_sig(pars[0])}x^{hf.round_sig(b)}$', c=color[0])
+            ax.scatter(x, y, label=rf'p={2 * dil}%, Fit$={hf.round_sig(pars[0])}x^{hf.round_sig(b)}$', c=color[0])
             x_fit = np.linspace(min(x), max(x), num=100)
             fit = [x4b(i, pars[0], b) for i in x_fit]
             ax.plot(x_fit, fit, c=color[0])
@@ -464,10 +483,10 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
 
 def fit_e_module(dilutions, e_module, e_module_error):
     fig, ax = plt.subplots(figsize=[15, 10])
-    dilutions = [2*d for d in dilutions]
+    dilutions = [2 * d for d in dilutions]
     e0 = e_module[0]
-    e_module = [e/e0 for e in e_module]
-    e_module_error = [e/e0 for e in e_module_error]
+    e_module = [e / e0 for e in e_module]
+    e_module_error = [e / e0 for e in e_module_error]
     ax.errorbar(dilutions, e_module, yerr=e_module_error, fmt='none', capsize=5)
     ax.scatter(dilutions, e_module, label='Simulationsdaten')
 
@@ -487,9 +506,9 @@ def fit_e_module(dilutions, e_module, e_module_error):
 
 
 if __name__ == '__main__':
-    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r3 (copy)'
-    a, b, c = mean_energy_vs_dv(path)
-    a, b, c = fit_energy(a, b, c, True)
-    fit_e_module(a, b, c)
-
-
+    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell'
+    # plot_energy_convergence([2.5, 5.0, 7.5], 5, 50)
+    # a, b, c = mean_energy_vs_dv(path)
+    # a, b, c = fit_energy(a, b, c, True)
+    # fit_e_module(a, b, c)
+    diluted_lattice(list(range(0, 15)), [0, 1, 2.5, 5, 10], path, True)
