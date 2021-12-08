@@ -216,5 +216,5 @@ if __name__ == '__main__':
     # d = 3**.5*40*10**(0)
     d = 70
     seed = None
-    plot_graph(20, r=d*4, displace_value=10*d, percentile=0, x0=True, tg=True, sphere=True, seed=seed, d=d, k=1000/d**2)
+    plot_graph(25, r=d*4, displace_value=10*d, percentile=0, x0=True, tg=True, sphere=True, seed=seed, d=d, k=1000/d**2)
     # fit_contour(5, 50, 10.0)

@@ -73,4 +73,10 @@ def create_seed_list():
     f.close()
 
 
+def calculate_r2(func, x, y, pars):
+    ss_res = np.sum((y - [func(dim, pars) for dim in x]) ** 2)
+    ss_tot = np.sum((y - np.mean(y)) ** 2)
+    return round(1 - (ss_res / ss_tot), 2)
+
+
 

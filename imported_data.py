@@ -35,12 +35,6 @@ def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None
     plot.draw_initial_graph(A, 22, pos, l, dv=dv, rad=rad, draw_sphere=sphere, d=d, max_dist=max_dist)
 
 
-path = '/home/jurij/Python/Physik/Bachelorarbeit/current_measurements/dim=20_dv=175.0_perc=1.0_357618818.pickle'
-seed = 357618818
-d = 70
-#single_plot_from_pickle(20, 175.0, path, 1.0, seed, d, sphere=True, rad=2*d)
-
-
 def print_convergence(dim, dv, gtol=1.e-10, perc=0):
     obj = m.import_pickle(dim, dv, gtol, perc)
     # print(gtol, obj.fun, obj.message)
@@ -81,13 +75,14 @@ def plot_energy_convergence(dvs, min_d, max_d):
     plt.show()
 
 
-def calculate_distance(dim, dv, path, perc=0, d=1):
+def calculate_distance(dim, dv, path, perc=.0, d=1, seed=None):
     lattice = hl.create_lattice(dim, d)
     lattice = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], dv)
+    print(path, seed)
     pic = pickle.load(open(path, 'rb'))
     distance = []
     x = pic.x
-    adj = hl.dilute_lattice_point(hl.adjacency_matrix(lattice), perc)
+    adj = hl.dilute_lattice_point(hl.adjacency_matrix(lattice), perc, lattice, seed)
     mrows, mcols, imrows, imcols, e = hl.energy_func_prep(np.triu(adj[0]), np.triu(adj[1]), d)
     xs, no_use, xsdict, xdict = hl.list_of_coordinates(lattice)
 
@@ -184,7 +179,7 @@ def make_x4(b):
 
 
 def x4(x, a):
-    return a * (x) ** 4
+    return a*x**4
 
 
 def plot_energy_vs_dv(dim, min_dv, max_dv, dv_step=.5, perc=0):
@@ -242,33 +237,25 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
     for p in ps:
         mean_energy = []
         standard_deviation = []
-        del_index = []
         for d in range(len(dvs)):
             energy = []
-            count = 0
             for i in file_names:
                 if f'dv={dvs[d]}' in i and f'perc={p}' in i:
                     energy.append(pickle.load(open(path + '/' + i, 'rb')).fun)
-                    count += 1
 
             if not energy:
                 ener = 0
+                std = 0
             else:
                 ener = np.mean(energy)
+                std = np.std(energy)
 
-            if ener > 0:
-                mean_energy.append(ener)
-                standard_deviation.append(1 * np.std(energy) / len(energy) ** .5)
-            else:
-                del_index.append(d)
-            print(f'p={p}, d={d}, number of measurements {count}')
-        dvsc = np.delete(dvs, del_index)
-        if len(del_index) == 0:
-            del_index.append(-1)
+            mean_energy.append(ener)
+            standard_deviation.append(std)
 
+
+        dvsc = dvs
         pars, cov = curve_fit(x4, dvsc, mean_energy)  # , sigma=standard_deviation)
-        x0 = dvs[del_index[0]]
-        if p == 0: x0 = 0
         # pars, cov = curve_fit(make_x4(x0), dvsc, mean_energy)  # , sigma=standard_deviation)
         e_module.append(pars[0])
         e_module_error.append(np.sqrt(np.diag(cov))[0])
@@ -281,27 +268,40 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
             for i in x:
                 fit.append(x4(i, pars[0]))
             ax.plot(x, fit,
-                    label=rf'p={2 * p}%: a={hf.round_sig(pars[0])}, $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}$ ')
+                    label=rf'p={2 * p}%: a={hf.round_sig(pars[0])}, $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}$'
+                    +r', $R^2$='+str(hf.calculate_r2(x4, np.array(dvsc), np.array(mean_energy), pars[0])))
             # rf'b={hf.round_sig(pars[1])}') #label=rf'p={2*p/100}%: $a={hf.round_sig(pars[0])}, b={hf.round_sig(pars[1])}$,'
             # rf' $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}, \Delta b={hf.round_sig(np.sqrt(np.diag(cov))[1])}$')
 
     if plot_energy:
-        ax.set_title('Mittlere minimale Energie aufgetragen gegen dv, für verschiedene p', size=20)
+        ax.set_title(r'Mittlere minimale Energie aufgetragen gegen $\delta$, für verschiedene $p$', size=20)
         ax.set_ylabel('Mittlere minimale Energie in J', size=20)
-        ax.set_xlabel('dv in Vielfachen von d', size=20)
+        ax.set_xlabel(r'$\delta$ in Vielfachen von $d$', size=20)
         ax.legend(fontsize=20)
         ax.tick_params(axis="x", labelsize=15)
         ax.tick_params(axis="y", labelsize=15)
         plt.show()
 
     if plot_e_module:
-        ax.set_title('E-Module eines Gitters für verschiedene Verdünnungen', size=20)
-        ax.set_ylabel('E-Modul in J/m', size=20)
-        ax.set_xlabel('p in Prozent', size=20)
+        ax.grid()
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
+        ax.set_title('Energei-Abstands-Koeffizienten eines Gitters für verschiedene Verdünnungen', size=20)
+        ax.set_ylabel(r'Fit-Parameter e/e0', size=20)
+        ax.set_xlabel(r'Verdünnung $p$ in %', size=20)
         for i in range(len(ps)):
             ps[i] = ps[i] * 2
-        ax.scatter(ps, e_module, c='black')
-        plt.errorbar(ps, e_module, yerr=e_module_error, xerr=0, fmt='none', ecolor='black', capsize=5)
+        e0 = e_module[0]
+        e_module = [e / e0 for e in e_module]
+        e_module_error = [e / e0 for e in e_module_error]
+        pars, cov = curve_fit(a_x, ps, e_module, sigma=e_module_error)
+        x_fit = np.linspace(min(ps), max(ps), num=100)
+        fit = [a_x(i, pars[0], pars[1]) for i in x_fit]
+        ax.plot(x_fit, fit, label=rf'Linearer Fit $e/e_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$, '
+                                  rf'$\Delta e/e_0={hf.round_sig(np.sqrt(np.diag(cov))[0])},{hf.round_sig(np.sqrt(np.diag(cov))[1])}$', c='purple')
+        ax.scatter(ps, e_module, c='purple', label='Simulationsdaten')
+        plt.errorbar(ps, e_module, yerr=e_module_error, xerr=0, fmt='none', ecolor='purple', capsize=5)
+        ax.legend(fontsize=20)
         plt.show()
 
     return e_module, e_module_error
@@ -429,11 +429,12 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
     # Extract all measured dilutions
     dilutions = list(set([x[2] for x in dif_paras]))
     dilutions = np.sort(dilutions)
-    # dilutions = [0.0, 1.0, 2.0, 5.0]
+
+    dilutions = [0.0, 1.0, 2.0, 3.0, 5.0]
     e_module = []
     e_module_error = []
-    # p0=[.001]
-    p0 = None
+    p0=.001
+    #p0 = None
 
     for dil in dilutions:
         y = []
@@ -446,32 +447,31 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
                 y_error.append(energy_std[i])
 
         if dil == 0.0:
-            y0 = y[0]
-            y = [yi / y0 for yi in y]
-            y_error = [ye / y0 for ye in y_error]
-            pars, cov = curve_fit(x4b, x, y, p0=p0)
+
+            func = lambda x, a: a*x**3
+
+
+            pars, cov = curve_fit(func, x, y, p0=p0)
             e_module.append(pars[0])
             e_module_error.append(np.sqrt(np.diag(cov))[0])
-            b = pars[1]
         else:
-            y = [yi / y0 for yi in y]
-            y_error = [ye / y0 for ye in y_error]
-            pars, cov = curve_fit(make_x4(b), x, y)  # , sigma=y_error)
+
+            pars, cov = curve_fit(func, x, y, p0=p0)  # , sigma=y_error)
             e_module.append(pars[0])
             e_module_error.append(np.sqrt(np.diag(cov))[0])
 
         if plot_energy:
             ax.errorbar(x, y, yerr=y_error, fmt='none', c=color[0], capsize=5)
-            ax.scatter(x, y, label=rf'p={2 * dil}%, Fit$={hf.round_sig(pars[0])}x^{hf.round_sig(b)}$', c=color[0])
+            ax.scatter(x, y, label=rf'p={2 * dil}%, Fit$=\mu x^3$, $\mu=({hf.round_sig(pars[0])}\pm{hf.round_sig(np.sqrt(np.diag(cov))[0])})$', c=color[0])
             x_fit = np.linspace(min(x), max(x), num=100)
-            fit = [x4b(i, pars[0], b) for i in x_fit]
+            fit = [func(i, pars[0]) for i in x_fit]
             ax.plot(x_fit, fit, c=color[0])
             color.pop(0)
 
     if plot_energy:
-        ax.set_title('Energie durch Kugeln (r=210nm) ausgelenkter, verdünnter Gitter', size=20)
-        ax.set_ylabel(r'$U / U_{p=0}(dv=0)$', size=20)
-        ax.set_xlabel('dv in nm', size=20)
+        ax.set_title('Energie durch Kugeln (r=140nm) ausgelenkter, verdünnter Gitter', size=20)
+        ax.set_ylabel(r'$U$', size=20)
+        ax.set_xlabel(r'$\delta$ in nm', size=20)
         ax.legend(fontsize=20)
         ax.tick_params(axis="x", labelsize=15)
         ax.tick_params(axis="y", labelsize=15)
@@ -496,19 +496,64 @@ def fit_e_module(dilutions, e_module, e_module_error):
     ax.plot(x_fit, fit, label=rf'Linearer Fit $E/E_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
 
     ax.grid()
-    ax.set_title('E-Module durch Kugeln (r=210nm) ausgelenkter verdünnter Gitter', size=20)
-    ax.set_ylabel(r'$E / E_0$', size=20)
-    ax.set_xlabel('p in %', size=20)
+    ax.set_title('Energie-Abstands-Koeffizienten durch Kugeln (r=140nm) ausgelenkter verdünnter Gitter', size=20)
+    ax.set_ylabel(r'$e / e_0$', size=20)
+    ax.set_xlabel('$p$ in %', size=20)
     ax.legend(fontsize=20)
     ax.tick_params(axis="x", labelsize=15)
     ax.tick_params(axis="y", labelsize=15)
     plt.show()
 
 
+def gather_hist(path_to_dir, dv, ps, sample_size):
+    file_names = os.listdir(path_to_dir)
+
+    for p in ps:
+        f_to_gather = []
+        for i in file_names:
+            if f'dv={dv}' in i and f'perc={p}' in i:
+                f_to_gather.append(f'{path_to_dir}/{i}')
+
+        for i in range(sample_size):
+            if i == 0:
+                file = f_to_gather[i]
+                seed_num = value_from_path(f_to_gather[i])[3]
+                print(seed_num)
+                dis = calculate_distance(25, dv, path=file, perc=p, seed=seed_num)
+                print(max(dis))
+                print(max(calculate_distance(25, dv, file, p, seed=268098785)))
+            else:
+                file = f_to_gather[i]
+                seed_num = value_from_path(f_to_gather[i])[3]
+                dis += calculate_distance(25, dv, path=file, perc=p, seed=seed_num)
+
+        plt.hist(dis, density=True, bins=200, alpha=.5, label=f'{p}%, {np.max(dis)}')
+
+    plt.legend()
+    plt.show()
+
+
+pathh = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell'
+print(gather_hist(pathh, 5.0, [0.5], 1))
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
-    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell'
+    pass
+    #path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r2'
     # plot_energy_convergence([2.5, 5.0, 7.5], 5, 50)
     # a, b, c = mean_energy_vs_dv(path)
     # a, b, c = fit_energy(a, b, c, True)
     # fit_e_module(a, b, c)
-    diluted_lattice(list(range(0, 15)), [0, 1, 2.5, 5, 10], path, True)
+    # diluted_lattice(np.arange(2.5, 15, .5), [0.0, .5, 1.0, 1.5, 2.5, 3.75, 5.0, 6.0, 7.5, 9.0, 10.0], path, False, True)
+    #path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=2.5_431679527.pickle'
+    #seed = 431679527
+    #d=1
+    #print(max(calculate_distance(25, 5.0, path, 2.5, seed=seed)))
+    #single_plot_from_pickle(25, 5.0, path, 2.5, seed, d, sphere=False)

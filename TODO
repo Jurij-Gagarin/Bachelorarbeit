@@ -14,3 +14,28 @@ for i in $(cat seed_list.txt)
 do
   python3 produce.py -dim 20 -dv 5.0 -p 5 --s $i
 done
+
+        path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=2.5_244144809.pickle'
+        seed = 244144809
+        dis = calculate_distance(25, 5.0, path, 2.5, seed=seed)
+
+        path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=2.5_140002462.pickle'
+        seed = 140002462
+        dis += calculate_distance(25, 5.0, path, 2.5, seed=seed)
+
+        path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=2.5_136543366.pickle'
+        seed = 136543366
+        dis += calculate_distance(25, 5.0, path, 2.5, seed=seed)
+
+        path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=2.5_71896423.pickle'
+        seed = 71896423
+        dis += calculate_distance(25, 5.0, path, 2.5, seed=seed)
+
+        path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=2.5_52541368.pickle'
+        seed = 52541368
+        dis += calculate_distance(25, 5.0, path, 2.5, seed=seed)
+
+
+        path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=0.0_664677782.pickle'
+        seed = 664677782
+        dis2 = calculate_distance(25, 5.0, path, 0.0, seed=seed)
