@@ -57,14 +57,15 @@ def generate_manipulated_plot_positions(dim, lattice, opt, r=1, displace_value=1
     return pos
 
 
-def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0, rad=0, max_dist=None, d=1, draw_sphere=False):
+def draw_initial_graph(A, angle, pos, lattice, nodes=False, vectors=False, dv=0, rad=0, max_dist=None, d=1,
+                       draw_sphere=False):
     rows, cols = np.where(A == 1)
     edges = zip(rows.tolist(), cols.tolist())
     G = nx.Graph()
     G.add_edges_from(edges)
 
     with plt.style.context('classic'):
-        fig = plt.figure(figsize=(20, 20), facecolor='white')
+        fig = plt.figure(figsize=(15, 15), facecolor='white')
         ax = fig.add_subplot(projection='3d')
         ax.set_title('', size=30)
         max_dis = []

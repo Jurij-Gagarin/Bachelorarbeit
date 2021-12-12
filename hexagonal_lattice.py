@@ -346,23 +346,11 @@ def list_of_coordinates(lattice):
 
 
 def energy_func_prep(A, As, d):
-    # This does some basic preparation for the optimized energy function
+    # This does some basic preparation for the optimized energy functions
     mrows, mcols = np.where(A == 1)
     imrows, imcols = np.where(As == 1)
     e = d / math.sqrt(3)
     return mrows, mcols, imrows, imcols, e
-
-
-def sigmoid_prep(r_list, r_dict, mrows, rad2):
-    smallest_r = rad2
-    smallest_r_index = None
-    for i in mrows:
-        dis_node = r_list[r_dict[i]]**2 + r_list[r_dict[i]+1]**2
-        if dis_node < smallest_r:
-            smallest_r = dis_node
-            smallest_r_index = i
-    if smallest_r_index is not None: return smallest_r_index
-    else: print('Sphere slips through lattice. Energy = 0.')
 
 
 def energy_func_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, k):
@@ -402,7 +390,7 @@ def energy_func_sphere(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, latti
 
 
 def energy_func_jac_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, k=2):
-    # Calculates jacobian i.e. the gradient for the energy function. Might be optimized in the future.
+    # Calculates jacobian i.e. the gradient for the energy function.
     len_x = len(x)
     grad = np.zeros(len_x)
 
@@ -430,6 +418,8 @@ def energy_func_jac_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, latt
 
 
 def energy_func_jac_sphere(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, r, dv, k):
+    # Calculates same jacobian as in energy_func_jac_opt() with an added
+    # Lennard-Jones-like potential
     grad = energy_func_jac_opt(x, xdict, xs, xsdict, mrows, mcols, imrows, imcols, lattice, e, A, xdict_reverse, k)
 
     for i in range(int(len(grad)/3)):
@@ -459,6 +449,7 @@ def minimize_energy_opt(lattice, method, tol, d, k, option, x0, A, jac_func):
 
 
 def minimize_energy_sphere(lattice, method, tol, d, k, option, x0, A, jac_func, rad, dv):
+    # Structures the act of energy minimization. For spherical indenter.
     r = list_of_coordinates(lattice)
     preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
     args = (r[3], r[0], r[2], preps[0], preps[1], preps[2], preps[3], lattice, preps[4], np.add(A[0], A[1]),
@@ -472,17 +463,6 @@ def minimize_energy_sphere(lattice, method, tol, d, k, option, x0, A, jac_func, 
                                args=args, options=option)
 
     return minimum
-
-
-def check_gradient(dim, rad, dv, perc, d=1, k=2):
-    ls = create_lattice_sphere2(dim, rad**2, d)
-    l = ls[0]
-    A = dilute_lattice(adjacency_matrix(l), perc)
-    r = list_of_coordinates(l)
-    preps = energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
-
-    return opt.check_grad(energy_func_sphere, energy_func_jac_sphere, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
-                          preps[3], l, preps[4], np.add(A[0], A[1]), {v: k for k, v in r[3].items()}, rad, dv, d, k)
 
 
 def assemble_result(result, fixed_values, plot=False):
@@ -510,7 +490,7 @@ def assemble_result(result, fixed_values, plot=False):
         else:
             zf.append(fixed_values[i])
 
-    # Very basic plot. Might be removed in the future.
+    # Very basic plot.
     if plot:
         fig = plt.figure(figsize=(15, 15))
         ax = fig.add_subplot(111, projection='3d')
@@ -618,61 +598,7 @@ def run_sphere(dim, rad, dv=0, d=1, k=2, plot=False, method='CG', tol=1.e-3, per
     return res
 
 
-def number_of_links(dim):
-    ps = list(range(0, 47, 2))
-    y = []
-    for p in ps:
-        seed = None
-        ls = create_lattice(dim, 1)
-        l = ls[0]
-        # sumA1 = []
-        sumA2 = []
-        # sumA3 = []
-        print(p)
-
-        for i in range(10):
-            print(i)
-            adj = adjacency_matrix(l)
-            # adj = dilute_lattice(adj, percentile)
-            A = dilute_lattice_point(adj, p, l, seed)
-            # AA = dilute_lattice_point2(adj, percentile, l, seed)
-            A1 = adj[0] + adj[1]
-            A2 = A[0] + A[1]
-            # A3 = AA[0] + AA[1]
-
-            # sumA1.append(np.sum(A1))
-            sumA2.append(np.sum(A2)/np.sum(A1))
-            print(sumA2)
-            # sumA3.append(np.sum(A3))
-        y.append(hf.round_sig(np.mean(sumA2)))
-
-    ps100 = [i/100 for i in ps]
-    ps100m = [1-i / 100 for i in ps]
-    fig = plt.figure(figsize=(20, 20), facecolor='white')
-    ax = fig.add_subplot()
-    ax.plot(ps100, ps100m, label='angegebene Verdünnung')
-    ax.scatter(ps100, y, color='orange', label='tatsächliche Verdünnung')
-    ax.legend(fontsize=15)
-    # ax.set_title('Minimale Energie aufgetragen gegen dv', size=20)
-    ax.set_ylabel('Verdünnte Verbindungen / Verbindungen total', size=20)
-    ax.set_xlabel('p in %', size=20)
-    ax.tick_params(axis="x", labelsize=15)
-    ax.tick_params(axis="y", labelsize=15)
-    ax.set_aspect(.4)
-    plt.show()
-
-
 if __name__ == '__main__':
+    pass
     # In here you can run this module
-    l2 = create_lattice_sphere2(20, 2 ** 2, 2, 1)
-    adj = adjacency_matrix(l2[0])
-    dil_adj = dilute_lattice(adj, 50)
-    mrows = energy_func_prep(dil_adj[0], dil_adj[1], 1)[0]
-    xs, x, xsdict, xdict = list_of_coordinates(l2[0])
-    print(sigmoid_prep(x, xdict, mrows, 2), l2[1])
-
-    '''
-    The following will perform a simple lattice minimization. You can create a simple plot with setting 
-    plot to True. If you are not interest in the entire minimization message, you can print res.x for 
-    the coordinates and res.fun for the minimal energy.
-    '''
+    # Used mainly for testing

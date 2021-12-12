@@ -56,7 +56,7 @@ def plot_energy_convergence(dvs, min_d, max_d):
         fit_func = lambda x, a: a / x ** 2
         pars, cov = curve_fit(fit_func, dims, energy)
 
-        ss_res = np.sum((energy - [fit_func(dim, pars[0]) for dim in dims])**2)
+        ss_res = np.sum((energy - [fit_func(dim, pars[0]) for dim in dims]) ** 2)
         ss_tot = np.sum((energy - np.mean(energy)) ** 2)
         r2 = round(1 - (ss_res / ss_tot), 2)
 
@@ -75,10 +75,16 @@ def plot_energy_convergence(dvs, min_d, max_d):
     plt.show()
 
 
-def calculate_distance(dim, dv, path, perc=.0, d=1, seed=None):
+def calculate_distance(path, d=1, rad=None):
+    v = hf.value_from_path(path)
+    dim = int(v[0])
+    dv = float(v[1])
+    perc = float(v[2])
+    seed = int(v[3])
     lattice = hl.create_lattice(dim, d)
     lattice = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], dv)
-    print(path, seed)
+    if rad:
+        lattice = hl.create_lattice_sphere2(dim, rad ** 2, dv, d)[0]
     pic = pickle.load(open(path, 'rb'))
     distance = []
     x = pic.x
@@ -179,7 +185,7 @@ def make_x4(b):
 
 
 def x4(x, a):
-    return a*x**4
+    return a * x ** 4
 
 
 def plot_energy_vs_dv(dim, min_dv, max_dv, dv_step=.5, perc=0):
@@ -253,7 +259,6 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
             mean_energy.append(ener)
             standard_deviation.append(std)
 
-
         dvsc = dvs
         pars, cov = curve_fit(x4, dvsc, mean_energy)  # , sigma=standard_deviation)
         # pars, cov = curve_fit(make_x4(x0), dvsc, mean_energy)  # , sigma=standard_deviation)
@@ -269,7 +274,7 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
                 fit.append(x4(i, pars[0]))
             ax.plot(x, fit,
                     label=rf'p={2 * p}%: a={hf.round_sig(pars[0])}, $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}$'
-                    +r', $R^2$='+str(hf.calculate_r2(x4, np.array(dvsc), np.array(mean_energy), pars[0])))
+                          + r', $R^2$=' + str(hf.calculate_r2(x4, np.array(dvsc), np.array(mean_energy), pars[0])))
             # rf'b={hf.round_sig(pars[1])}') #label=rf'p={2*p/100}%: $a={hf.round_sig(pars[0])}, b={hf.round_sig(pars[1])}$,'
             # rf' $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}, \Delta b={hf.round_sig(np.sqrt(np.diag(cov))[1])}$')
 
@@ -298,7 +303,8 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
         x_fit = np.linspace(min(ps), max(ps), num=100)
         fit = [a_x(i, pars[0], pars[1]) for i in x_fit]
         ax.plot(x_fit, fit, label=rf'Linearer Fit $e/e_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$, '
-                                  rf'$\Delta e/e_0={hf.round_sig(np.sqrt(np.diag(cov))[0])},{hf.round_sig(np.sqrt(np.diag(cov))[1])}$', c='purple')
+                                  rf'$\Delta e/e_0={hf.round_sig(np.sqrt(np.diag(cov))[0])},{hf.round_sig(np.sqrt(np.diag(cov))[1])}$',
+                c='purple')
         ax.scatter(ps, e_module, c='purple', label='Simulationsdaten')
         plt.errorbar(ps, e_module, yerr=e_module_error, xerr=0, fmt='none', ecolor='purple', capsize=5)
         ax.legend(fontsize=20)
@@ -430,11 +436,11 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
     dilutions = list(set([x[2] for x in dif_paras]))
     dilutions = np.sort(dilutions)
 
-    dilutions = [0.0, 1.0, 2.0, 3.0, 5.0]
+    dilutions = [0.0, .5, 1.0, 2.0, 3.0, 5.0]
     e_module = []
     e_module_error = []
-    p0=.001
-    #p0 = None
+    p0 = .001
+    # p0 = None
 
     for dil in dilutions:
         y = []
@@ -448,8 +454,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
 
         if dil == 0.0:
 
-            func = lambda x, a: a*x**3
-
+            func = lambda x, a: a * x ** 4
 
             pars, cov = curve_fit(func, x, y, p0=p0)
             e_module.append(pars[0])
@@ -462,7 +467,10 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
 
         if plot_energy:
             ax.errorbar(x, y, yerr=y_error, fmt='none', c=color[0], capsize=5)
-            ax.scatter(x, y, label=rf'p={2 * dil}%, Fit$=\mu x^3$, $\mu=({hf.round_sig(pars[0])}\pm{hf.round_sig(np.sqrt(np.diag(cov))[0])})$', c=color[0])
+            ax.scatter(x, y,
+                       label=rf'p={2 * dil}%, Fit$=ex^4$, $e=({hf.round_sig(pars[0])}'
+                             rf'\pm{hf.round_sig(np.sqrt(np.diag(cov))[0])})$'r'Jm$^{-4}$',
+                       c=color[0])
             x_fit = np.linspace(min(x), max(x), num=100)
             fit = [func(i, pars[0]) for i in x_fit]
             ax.plot(x_fit, fit, c=color[0])
@@ -470,7 +478,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
 
     if plot_energy:
         ax.set_title('Energie durch Kugeln (r=140nm) ausgelenkter, verdünnter Gitter', size=20)
-        ax.set_ylabel(r'$U$', size=20)
+        ax.set_ylabel(r'$U$ in $10^{-18}$J', size=20)
         ax.set_xlabel(r'$\delta$ in nm', size=20)
         ax.legend(fontsize=20)
         ax.tick_params(axis="x", labelsize=15)
@@ -493,7 +501,7 @@ def fit_e_module(dilutions, e_module, e_module_error):
     pars, cov = curve_fit(a_x, dilutions, e_module, sigma=e_module_error)
     x_fit = np.linspace(min(dilutions), max(dilutions), num=100)
     fit = [a_x(i, pars[0], pars[1]) for i in x_fit]
-    ax.plot(x_fit, fit, label=rf'Linearer Fit $E/E_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
+    ax.plot(x_fit, fit, label=rf'Linearer Fit $e/e_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
 
     ax.grid()
     ax.set_title('Energie-Abstands-Koeffizienten durch Kugeln (r=140nm) ausgelenkter verdünnter Gitter', size=20)
@@ -505,55 +513,174 @@ def fit_e_module(dilutions, e_module, e_module_error):
     plt.show()
 
 
-def gather_hist(path_to_dir, dv, ps, sample_size):
+def gather_hist(path_to_dir, dv, ps, sample_size, plot=True, d=1, rad=None):
     file_names = os.listdir(path_to_dir)
+    if plot:
+        fig, ax = plt.subplots(figsize=[16, 9])
+    max_dist = []
+    max_dist_std = []
+    mean_dist = []
+    mean_dist_std = []
+    sz = sample_size
 
     for p in ps:
+        sample_size = sz
         f_to_gather = []
+        dis_max = []
+        dis = []
+
+
         for i in file_names:
-            if f'dv={dv}' in i and f'perc={p}' in i:
+            if f'dv={dv*d}' in i and f'perc={p}' in i:
                 f_to_gather.append(f'{path_to_dir}/{i}')
 
+        print(len(f_to_gather), sample_size)
+        if len(f_to_gather) < sample_size:
+            sample_size = len(f_to_gather)
+
         for i in range(sample_size):
+            file = f_to_gather[i]
+            n_dis = calculate_distance(file, d=d, rad=rad)
+            n_dis = [3 ** .5 * di/d for di in n_dis]
+            dis.append(np.mean(n_dis))
+            dis_max.append(max(n_dis))
             if i == 0:
-                file = f_to_gather[i]
-                seed_num = value_from_path(f_to_gather[i])[3]
-                print(seed_num)
-                dis = calculate_distance(25, dv, path=file, perc=p, seed=seed_num)
-                print(max(dis))
-                print(max(calculate_distance(25, dv, file, p, seed=268098785)))
+                hist = n_dis
             else:
-                file = f_to_gather[i]
-                seed_num = value_from_path(f_to_gather[i])[3]
-                dis += calculate_distance(25, dv, path=file, perc=p, seed=seed_num)
+                hist += n_dis
 
-        plt.hist(dis, density=True, bins=200, alpha=.5, label=f'{p}%, {np.max(dis)}')
+        max_dist.append(np.mean(dis_max))
+        max_dist_std.append(np.std(dis_max))
+        mean_dist.append(np.mean(dis))
+        mean_dist_std.append(np.std(dis))
+        print(f'{dv*d, p}max:{max_dist[-1]}+-{max_dist_std[-1]}')
+        print(f'{dv*d, p}mean:{mean_dist[-1]}+-{mean_dist_std[-1]}')
+        if mean_dist[-1] < 1.e-10:
+            break
+        if plot:
+            ax.hist(hist, density=True, bins=200, alpha=.5, label=rf'{2 * p}%, $\max(\Delta R)=$'
+                                                                 rf'{hf.round_sig(np.max(hist))}%, 'r'$\bar{\Delta R}=$'
+                                                                 f'{hf.round_sig(np.mean(hist))}%')
 
-    plt.legend()
+    if plot:
+        ax.set_title(rf'Auslenkungs-Häufigkeits-Verteilung für verschiedene Verdünnungen $p$ bei $\delta={dv}d$', size=20)
+        ax.set_ylabel(r'Normierte Häufigkeit', size=20)
+        ax.set_xlabel(
+            r'Auslenkung in Prozent des Gleichgewichtsabstandes: $\Delta R =(|\vec{R}_i-\vec{R}_j|-\epsilon)/\epsilon$',
+            size=20)
+        ax.legend(fontsize=20)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
+        # ax.set_xlim(-0.001, 0.008)
+        # ax.set_ylim(0, 10000)
+
+    if plot:
+        plt.show()
+
+    return mean_dist, mean_dist_std, max_dist, max_dist_std
+
+
+def export_dist(dv, ps, path_to_dir, sample_size, rad=None, d=1):
+    export_path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/dist_sphere-r2'
+    mean, mean_std, maximum, maximum_std = gather_hist(path_to_dir, dv, ps, sample_size, False, d, rad)
+    np.save(export_path+f'/mean-{dv}-{sample_size}.npy', mean)
+    np.save(export_path + f'/mean_std-{dv}-{sample_size}.npy', mean_std)
+    np.save(export_path + f'/max_std-{dv}-{sample_size}.npy', maximum_std)
+    np.save(export_path + f'/max-{dv}-{sample_size}.npy', maximum)
+
+
+def mean_dilution(dvs, ps, nonzero=True, fit=True):
+    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/dist_sphere-r2/'
+    fig, ax = plt.subplots(figsize=[10, 10])
+    ps = 2*np.array(ps)
+    ps_c = ps
+    colors = ['cornflowerblue', 'orange', 'green', 'red', 'purple']
+
+    for c, dv in enumerate(dvs):
+        y_mean = 100*np.load(path+f'mean-{dv}-100.npy')
+        y_mean_std = 50*np.load(path+f'mean_std-{dv}-100.npy')
+        if y_mean[-1] < 1.e-10:
+            y_mean = y_mean[0:len(y_mean) - 1]
+            y_mean_std = y_mean_std[0:len(y_mean_std) - 1]
+        ps = ps_c
+        ps = ps[0:len(y_mean)]
+        if fit:
+            func = lambda xx, a, b: a*xx + b
+            par, cov = curve_fit(func, ps, y_mean)
+            x = np.arange(ps_c[0], ps_c[-1]+.5, .5)
+            ax.plot(x, func(x, par[0], par[1]),
+                    color=colors[c])
+            print(f'mean: delta={dv}d')
+            print(f'a={hf.round_sig(par[0])}+-{hf.round_sig(np.sqrt(np.diag(cov))[0])}, '
+                  f'b={hf.round_sig(par[1])}+-{hf.round_sig(np.sqrt(np.diag(cov))[1])}')
+            print(' ')
+        ax.errorbar(ps, y_mean, y_mean_std, marker='x', ms=10, linestyle='none', capsize=5, color=colors[c],
+                    label=f'$\delta={dv}d$')
+    ax.set_ylim(-.5, None)
+    ax.set_ylabel(r'$\bar{\Delta R}$ in %', size=20)
+    ax.set_xlabel(r'$p$ in %', size=20)
+    ax.legend(fontsize=20)
+    ax.tick_params(axis="x", labelsize=20)
+    ax.tick_params(axis="y", labelsize=20)
+    ax.grid()
     plt.show()
 
 
-pathh = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell'
-print(gather_hist(pathh, 5.0, [0.5], 1))
+def max_dilution(dvs, ps, fit=True):
+    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/dist_sphere/'
+    fig, ax = plt.subplots(figsize=[10, 10])
+    ps = 2*np.array(ps)
+    ps_c = ps
+    colors = ['cornflowerblue', 'orange', 'green', 'red', 'purple']
 
+    for c, dv in enumerate(dvs):
+        y_max = 100*np.load(path+f'max-{dv}-100.npy')
+        y_max_std = 50*np.load(path+f'max_std-{dv}-100.npy')+.0001
+        if y_max[-1] < 1.e-10:
+            y_max = y_max[0:len(y_max) - 1]
+            y_max_std = y_max_std[0:len(y_max_std) - 1]
+        ps = ps_c
+        ps = ps[0:len(y_max)]
+        if fit:
+            func = lambda xx, a, b: a*xx + b
+            par, cov = curve_fit(func, ps, y_max, sigma=y_max_std)
+            x = np.arange(ps_c[0], ps_c[-1]+.5, .5)
+            ax.plot(x, func(x, par[0], par[1]))
+            print(f'delta={dv}d')
+            print(f'a={hf.round_sig(par[0])}+-{hf.round_sig(np.sqrt(np.diag(cov))[0])}, '
+                  f'b={hf.round_sig(par[1])}+-{hf.round_sig(np.sqrt(np.diag(cov))[1])}')
+            print(' ')
 
-
-
-
-
-
+        ax.errorbar(ps, y_max, y_max_std, marker='x', ms=10, linestyle='none', capsize=5, color=colors[c],
+                    label=f'$\delta={dv}d$')
+    ax.set_ylim(-5, None)
+    ax.set_ylabel(r'$\max(\Delta R)$ in %', size=20)
+    ax.set_xlabel(r'$p$ in %', size=20)
+    ax.legend(fontsize=20)
+    ax.tick_params(axis="x", labelsize=20)
+    ax.tick_params(axis="y", labelsize=20)
+    ax.grid()
+    plt.show()
 
 
 if __name__ == '__main__':
-    pass
-    #path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r2'
+    # pathh = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r2'
+    # max_dilution([1, 2.5, 5], [0.0, .5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0], fit=False)
+    # print(np.load('/home/jurij/Python/Physik/Bachelorarbeit-Daten/dist/max-2.5-1.npy'))
+    # gather_hist(pathh, 2.5, [0.0, 5.0], 5, d=70, rad=3*70)
+    # export_dist(1, [0.0, .5, 1.0, 2.0, 3.0, 4.0, 5.0], pathh, 100, d=70, rad=2*70)
+    # export_dist(2.5, [0.0, .5, 1.0, 2.0, 3.0, 4.0, 5.0], pathh, 100, d=70, rad=2 * 70)
+    # export_dist(5, [0.0, .5, 1.0, 2.0, 3.0, 4.0, 5.0], pathh, 100, d=70, rad=2 * 70)
+
+    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r2'
     # plot_energy_convergence([2.5, 5.0, 7.5], 5, 50)
-    # a, b, c = mean_energy_vs_dv(path)
-    # a, b, c = fit_energy(a, b, c, True)
-    # fit_e_module(a, b, c)
+    a, b, c = mean_energy_vs_dv(path)
+    a, b, c = fit_energy(a, b, c, True)
+    fit_e_module(a, b, c)
     # diluted_lattice(np.arange(2.5, 15, .5), [0.0, .5, 1.0, 1.5, 2.5, 3.75, 5.0, 6.0, 7.5, 9.0, 10.0], path, False, True)
-    #path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell/dim=25_dv=5.0_perc=2.5_431679527.pickle'
-    #seed = 431679527
-    #d=1
-    #print(max(calculate_distance(25, 5.0, path, 2.5, seed=seed)))
-    #single_plot_from_pickle(25, 5.0, path, 2.5, seed, d, sphere=False)
+    #path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r3/dim=20_dv=455.0_perc=0.0_951144741.pickle'
+    #seed = 951144741
+    #d = 70
+    # print(max(calculate_distance(25, 5.0, path, 2.5, seed=seed)))
+    #max_dist = 37.56113885
+    #single_plot_from_pickle(20, 455.0, path, 0.0, seed, d, sphere=True, rad=3*d, max_dist=max_dist)

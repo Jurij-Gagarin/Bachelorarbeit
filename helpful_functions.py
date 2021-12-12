@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random as rn
 from math import floor, log10
+import hexagonal_lattice as hl
+from scipy import optimize as opt
 
 
 
@@ -56,7 +58,8 @@ def plot_colorbar(max_dist, d):
     ax.axes.get_yaxis().set_visible(False)
     ax.set_aspect(.01)
     eps = d/3**.5
-    ratio = max_dist/eps**2
+    max_dist = max_dist + eps
+    ratio = max_dist/eps - 1
     labels = [1, 1 + .2*ratio, 1 + .4*ratio, 1 + .6*ratio, 1 + .8*ratio, 1 + ratio]
     for i in range(len(labels)):
         labels[i] = str(round_sig(labels[i], 3)) + '$ \epsilon$'
@@ -79,4 +82,33 @@ def calculate_r2(func, x, y, pars):
     return round(1 - (ss_res / ss_tot), 2)
 
 
+def value_from_path(path):
+    end_of_seed = None
+    start_index = []
+    end_index = []
+    values = []
+
+    for i, char in enumerate(path):
+        if char == '=':
+            start_index.append(i)
+        if char == '_':
+            end_index.append(i)
+        if char == '.':
+            end_of_seed = i
+
+    for i, index in enumerate(start_index):
+        values.append(path[index + 1:end_index[i]])
+    values.append(path[end_index[-1] + 1:end_of_seed])
+    return values
+
+
+def check_gradient(dim, rad, dv, perc, d=1, k=2):
+    ls = hl.create_lattice_sphere2(dim, rad**2, d)
+    l = ls[0]
+    A = hl.dilute_lattice(adjacency_matrix(l), perc)
+    r = hl.list_of_coordinates(l)
+    preps = hl.energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
+
+    return opt.check_grad(energy_func_sphere, energy_func_jac_sphere, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
+                          preps[3], l, preps[4], np.add(A[0], A[1]), {v: k for k, v in r[3].items()}, rad, dv, d, k)
 

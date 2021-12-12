@@ -2,12 +2,11 @@
 
 import hexagonal_lattice as hl
 import time
-import timeit
+import helpful_functions as hf
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
-import argparse
 from scipy.optimize import curve_fit
 from math import sqrt
 from helpful_functions import round_sig
@@ -167,5 +166,48 @@ def import_pickle(dim, dv, gtol=1.e-10, perc=0):
     pickle_in = open(path, 'rb')
     return pickle.load(pickle_in)
 
+
+def number_of_links(dim):
+    ps = list(range(0, 47, 2))
+    y = []
+    for p in ps:
+        seed = None
+        ls = hl.create_lattice(dim, 1)
+        l = ls[0]
+        # sumA1 = []
+        sumA2 = []
+        # sumA3 = []
+        print(p)
+
+        for i in range(10):
+            print(i)
+            adj = hl.adjacency_matrix(l)
+            # adj = dilute_lattice(adj, percentile)
+            A = hl.dilute_lattice_point(adj, p, l, seed)
+            # AA = dilute_lattice_point2(adj, percentile, l, seed)
+            A1 = adj[0] + adj[1]
+            A2 = A[0] + A[1]
+            # A3 = AA[0] + AA[1]
+
+            # sumA1.append(np.sum(A1))
+            sumA2.append(np.sum(A2)/np.sum(A1))
+            print(sumA2)
+            # sumA3.append(np.sum(A3))
+        y.append(hf.round_sig(np.mean(sumA2)))
+
+    ps100 = [i/100 for i in ps]
+    ps100m = [1-i / 100 for i in ps]
+    fig = plt.figure(figsize=(20, 20), facecolor='white')
+    ax = fig.add_subplot()
+    ax.plot(ps100, ps100m, label='angegebene Verdünnung')
+    ax.scatter(ps100, y, color='orange', label='tatsächliche Verdünnung')
+    ax.legend(fontsize=15)
+    # ax.set_title('Minimale Energie aufgetragen gegen dv', size=20)
+    ax.set_ylabel('Verdünnte Verbindungen / Verbindungen total', size=20)
+    ax.set_xlabel('p in %', size=20)
+    ax.tick_params(axis="x", labelsize=15)
+    ax.tick_params(axis="y", labelsize=15)
+    ax.set_aspect(.4)
+    plt.show()
 
 
