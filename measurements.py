@@ -197,17 +197,15 @@ def number_of_links(dim):
 
     ps100 = [i/100 for i in ps]
     ps100m = [1-i / 100 for i in ps]
-    fig = plt.figure(figsize=(20, 20), facecolor='white')
+    fig = plt.figure(figsize=(15, 10), facecolor='white')
     ax = fig.add_subplot()
-    ax.plot(ps100, ps100m, label='angegebene Verdünnung')
-    ax.scatter(ps100, y, color='orange', label='tatsächliche Verdünnung')
+    ax.plot(ps100, ps100m, label='$g$')
+    ax.scatter(ps100, y, color='orange', label=r"$g'$")
     ax.legend(fontsize=15)
     # ax.set_title('Minimale Energie aufgetragen gegen dv', size=20)
-    ax.set_ylabel('Verdünnte Verbindungen / Verbindungen total', size=20)
+    ax.set_ylabel('', size=20)
     ax.set_xlabel('p in %', size=20)
     ax.tick_params(axis="x", labelsize=15)
     ax.tick_params(axis="y", labelsize=15)
-    ax.set_aspect(.4)
+    #ax.set_aspect(.4)
     plt.show()
-
-

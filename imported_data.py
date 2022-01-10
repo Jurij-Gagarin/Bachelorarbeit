@@ -15,7 +15,7 @@ def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=dv)
     if sphere:
-        l = hl.create_lattice_sphere2(dim, rad ** 2, dv, d)[0]
+        l = hl.create_lattice_sphere(dim, rad ** 2, dv, d)[0]
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), perc, l, seed)
     A = np.add(matrices[0], matrices[1])
     pos = {}
@@ -33,12 +33,6 @@ def single_plot_from_pickle(dim, dv, path, perc=0, seed=None, d=1, max_dist=None
             pos[i] = (vector[0], vector[1], vector[2])
 
     plot.draw_initial_graph(A, 22, pos, l, dv=dv, rad=rad, draw_sphere=sphere, d=d, max_dist=max_dist)
-
-
-def print_convergence(dim, dv, gtol=1.e-10, perc=0):
-    obj = m.import_pickle(dim, dv, gtol, perc)
-    # print(gtol, obj.fun, obj.message)
-    print(obj)
 
 
 def plot_energy_convergence(dvs, min_d, max_d):
@@ -84,7 +78,7 @@ def calculate_distance(path, d=1, rad=None):
     lattice = hl.create_lattice(dim, d)
     lattice = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], dv)
     if rad:
-        lattice = hl.create_lattice_sphere2(dim, rad ** 2, dv, d)[0]
+        lattice = hl.create_lattice_sphere(dim, rad ** 2, dv, d)[0]
     pic = pickle.load(open(path, 'rb'))
     distance = []
     x = pic.x
@@ -119,16 +113,18 @@ def plot_histograms(dims, dvs):
         for dv in dvs:
             paths = f'/home/jurij/Python/Physik/Bachelorarbeit/measurements/dim_5-50_{dv}_0/dim={d}_dv={dv}_perc=0.pickle'
             arr = calculate_distance(d, dv, paths)
+            arr = [100*a*3**.5 for a in arr]
             maximum = max(arr)
-            plt.hist(arr, density=True, bins=200, label=f'dim={d}, dv={dv}, max elongation = '
-                                                        f'{round(maximum, 2 - int(floor(log10(abs(maximum)))) - 1)}')
+            plt.hist(arr, density=True, bins=200, label=rf'dim={d}, $\delta$={dv}d, $\max(\Delta R)$='
+                                                        f'{round(maximum, 2 - int(floor(log10(abs(maximum)))) - 1)}',
+                     alpha=.5)
         dvs_str = ', '.join(str(e) for e in dvs)
-        plt.title(f'Elongation-histogram-plot for lattices with different dims, displaced by dv={dvs_str}', size=20)
+        plt.title(rf'Histogramm von $\Delta R$ für $\delta={dvs_str}d$', size=20)
     plt.legend(fontsize=20)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.ylabel('Anzahl', fontsize=20)
-    plt.xlabel('Abstand - Gleichgewichtsabstand', fontsize=20)
+    plt.ylabel('normierte Anzahl', fontsize=20)
+    plt.xlabel(r'$\Delta R$ in %', fontsize=20)
     plt.show()
 
 
@@ -175,20 +171,11 @@ def plot_max_elongation2_vs_energy(dims, dv):
     plt.show()
 
 
-def make_x4(b):
-    x0 = b
-
-    def x4(x, a):
-        return a * (x - x0) ** 4
-
-    return x4
-
-
 def x4(x, a):
     return a * x ** 4
 
 
-def plot_energy_vs_dv(dim, min_dv, max_dv, dv_step=.5, perc=0):
+def plot_energy_vs_dv(dim, min_dv, max_dv, perc=0):
     energy = []
     dvs = []
     fit = []
@@ -204,32 +191,16 @@ def plot_energy_vs_dv(dim, min_dv, max_dv, dv_step=.5, perc=0):
     for i in x:
         fit.append(x4(i, pars[0]))
     ax.plot(dvs, energy, marker='o', linestyle='none', label='Daten')
-    ax.plot(x, fit, label=f'${hf.round_sig(pars[0])}x^4$, Parameterfehler {hf.round_sig(sqrt(cov), 1)}')
-    ax.set_title('Minimale Energie aufgetragen gegen dv', size=20)
-    ax.set_ylabel('Minimale Energie in J', size=20)
-    ax.set_xlabel('dv in Vielfachen von d', size=20)
+    ax.plot(x, fit, label=f'${hf.round_sig(pars[0])}x^4$, 'r'Parameterfehler $3\cdot10^{-6}$')
+    ax.set_title('$U_{min}$ aufgetragen gegen $\delta$', size=20)
+    ax.set_ylabel('$U_{min}$ in J', size=20)
+    ax.set_xlabel(r'$\delta$ in Vielfachen von $d$', size=20)
     ax.legend(fontsize=15)
     ax.tick_params(axis="x", labelsize=15)
     ax.tick_params(axis="y", labelsize=15)
-    ax.set_aspect(.2)
+    #ax.set_aspect(.2)
 
     plt.show()
-
-
-def energy_dil_lattice(path, dim, dv, perc):
-    f = open('./seed_list.txt', 'r')
-    seed = list(map(int, f.readlines()))
-    n = len(seed)
-    energy = np.zeros(n)
-
-    for i in range(int(n)):
-        paths = path + f'dim={dim}_dv={dv}_perc={perc}_{seed[i]}.pickle'
-        energy[i] = pickle.load(open(paths, 'rb')).fun
-    print(np.mean(energy), np.std(energy) / sqrt(n))
-    f.close()
-    plt.hist(energy, bins=20)
-    plt.show()
-    return energy
 
 
 def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
@@ -273,8 +244,8 @@ def diluted_lattice(dvs, ps, path, plot_energy=False, plot_e_module=False):
             for i in x:
                 fit.append(x4(i, pars[0]))
             ax.plot(x, fit,
-                    label=rf'p={2 * p}%: a={hf.round_sig(pars[0])}, $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}$'
-                          + r', $R^2$=' + str(hf.calculate_r2(x4, np.array(dvsc), np.array(mean_energy), pars[0])))
+                    label=rf'p={2 * p}%: e={hf.round_sig(pars[0])}, $\Delta e={hf.round_sig(np.sqrt(np.diag(cov))[0])}$'
+                          )
             # rf'b={hf.round_sig(pars[1])}') #label=rf'p={2*p/100}%: $a={hf.round_sig(pars[0])}, b={hf.round_sig(pars[1])}$,'
             # rf' $\Delta a={hf.round_sig(np.sqrt(np.diag(cov))[0])}, \Delta b={hf.round_sig(np.sqrt(np.diag(cov))[1])}$')
 
@@ -412,17 +383,6 @@ def mean_energy_vs_dv(path):
     return mean_energy, energy_std, dif_paras
 
 
-def x4b(x, a, b):
-    return a * x ** b
-
-
-def make_x4(b):
-    def x4(x, a):
-        return a * x ** b
-
-    return x4
-
-
 def a_x(x, a, b):
     return a * x + b
 
@@ -436,7 +396,7 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
     dilutions = list(set([x[2] for x in dif_paras]))
     dilutions = np.sort(dilutions)
 
-    dilutions = [0.0, .5, 1.0, 2.0, 3.0, 5.0]
+    #dilutions = [0.0, .5, 1.0, 2.0, 3.0, 5.0]
     e_module = []
     e_module_error = []
     p0 = .001
@@ -477,10 +437,10 @@ def fit_energy(mean_energy, energy_std, dif_paras, plot_energy=False):
             color.pop(0)
 
     if plot_energy:
-        ax.set_title('Energie durch Kugeln (r=140nm) ausgelenkter, verdünnter Gitter', size=20)
+        ax.set_title('Energie durch Kugeln (r=280nm) ausgelenkter, verdünnter Gitter', size=20)
         ax.set_ylabel(r'$U$ in $10^{-18}$J', size=20)
         ax.set_xlabel(r'$\delta$ in nm', size=20)
-        ax.legend(fontsize=20)
+        ax.legend(fontsize=18)
         ax.tick_params(axis="x", labelsize=15)
         ax.tick_params(axis="y", labelsize=15)
         ax.grid()
@@ -504,7 +464,7 @@ def fit_e_module(dilutions, e_module, e_module_error):
     ax.plot(x_fit, fit, label=rf'Linearer Fit $e/e_0={hf.round_sig(pars[0])}p+{hf.round_sig(pars[1])}$')
 
     ax.grid()
-    ax.set_title('Energie-Abstands-Koeffizienten durch Kugeln (r=140nm) ausgelenkter verdünnter Gitter', size=20)
+    ax.set_title('Energie-Abstands-Koeffizienten durch Kugeln (r=280nm) ausgelenkter verdünnter Gitter', size=20)
     ax.set_ylabel(r'$e / e_0$', size=20)
     ax.set_xlabel('$p$ in %', size=20)
     ax.legend(fontsize=20)
@@ -529,7 +489,6 @@ def gather_hist(path_to_dir, dv, ps, sample_size, plot=True, d=1, rad=None):
         dis_max = []
         dis = []
 
-
         for i in file_names:
             if f'dv={dv*d}' in i and f'perc={p}' in i:
                 f_to_gather.append(f'{path_to_dir}/{i}')
@@ -541,7 +500,7 @@ def gather_hist(path_to_dir, dv, ps, sample_size, plot=True, d=1, rad=None):
         for i in range(sample_size):
             file = f_to_gather[i]
             n_dis = calculate_distance(file, d=d, rad=rad)
-            n_dis = [3 ** .5 * di/d for di in n_dis]
+            n_dis = [100*3 ** .5 * di/d for di in n_dis]
             dis.append(np.mean(n_dis))
             dis_max.append(max(n_dis))
             if i == 0:
@@ -566,7 +525,7 @@ def gather_hist(path_to_dir, dv, ps, sample_size, plot=True, d=1, rad=None):
         ax.set_title(rf'Auslenkungs-Häufigkeits-Verteilung für verschiedene Verdünnungen $p$ bei $\delta={dv}d$', size=20)
         ax.set_ylabel(r'Normierte Häufigkeit', size=20)
         ax.set_xlabel(
-            r'Auslenkung in Prozent des Gleichgewichtsabstandes: $\Delta R =(|\vec{R}_i-\vec{R}_j|-\epsilon)/\epsilon$',
+            r'$\Delta R$ in %',
             size=20)
         ax.legend(fontsize=20)
         ax.tick_params(axis="x", labelsize=15)
@@ -590,7 +549,7 @@ def export_dist(dv, ps, path_to_dir, sample_size, rad=None, d=1):
 
 
 def mean_dilution(dvs, ps, nonzero=True, fit=True):
-    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/dist_sphere-r2/'
+    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/dist_sphere/'
     fig, ax = plt.subplots(figsize=[10, 10])
     ps = 2*np.array(ps)
     ps_c = ps
@@ -664,15 +623,17 @@ def max_dilution(dvs, ps, fit=True):
 
 
 if __name__ == '__main__':
-    # pathh = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r2'
-    # max_dilution([1, 2.5, 5], [0.0, .5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0], fit=False)
+    #pass
+    pathh = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/punktuell'
+    diluted_lattice(np.arange(2.5, 15.5, .5), [0.0, 1.0, 2.5, 5.0, 10.0], pathh, True)
+    # mean_dilution([1, 2.5, 5], [0.0, .5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0], fit=True)
     # print(np.load('/home/jurij/Python/Physik/Bachelorarbeit-Daten/dist/max-2.5-1.npy'))
-    # gather_hist(pathh, 2.5, [0.0, 5.0], 5, d=70, rad=3*70)
+    # gather_hist(pathh, 5.0, [0.0, .5, 1.5, 2.5], 15, d=1, rad=None)
     # export_dist(1, [0.0, .5, 1.0, 2.0, 3.0, 4.0, 5.0], pathh, 100, d=70, rad=2*70)
     # export_dist(2.5, [0.0, .5, 1.0, 2.0, 3.0, 4.0, 5.0], pathh, 100, d=70, rad=2 * 70)
     # export_dist(5, [0.0, .5, 1.0, 2.0, 3.0, 4.0, 5.0], pathh, 100, d=70, rad=2 * 70)
 
-    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r2'
+    path = '/home/jurij/Python/Physik/Bachelorarbeit-Daten/sphere-r3'
     # plot_energy_convergence([2.5, 5.0, 7.5], 5, 50)
     a, b, c = mean_energy_vs_dv(path)
     a, b, c = fit_energy(a, b, c, True)

@@ -88,52 +88,6 @@ def create_lattice(dim, d):
 def create_lattice_sphere(dim, r2, dv, d):
     # d is distance between two nodes on the x-axis
     # dim is the maximal summed factor for the lattice vectors
-    lattice = []
-    box_length = d * dim
-    next = False
-    r = math.sqrt(r2)
-
-    for k in range(0, 2):
-        for i in range(-dim, dim + 1):
-            for j in range(-dim, dim + 1):
-                if (abs(i) + abs(j)) <= dim:
-                    lattice.append(Node(i, j, d, k))
-                    x = lattice[-1].return_coordinates()[0]
-                    y = lattice[-1].return_coordinates()[1]
-                    if (abs(i) + abs(j)) == dim:
-                        lattice[-1] = lattice[-1].change_mobility(False)
-                    if x ** 2 + y ** 2 < r2:
-                        lattice[-1] = lattice[-1].change_coordinates([0, 0, -(r2-x**2-y**2)-dv])
-                    if next:
-                        lattice[-1] = lattice[-1].change_mobility(False)
-                        next = False
-                    if (abs(x) > box_length / 2) or (abs(y) > box_length / 2):
-                        lattice.pop(-1)
-                        next = True
-                        if len(lattice) > 0:
-                            lattice[-1] = lattice[-1].change_mobility(False)
-                    try:
-                        mobility = lattice[-1].return_mobility()
-                    except IndexError:
-                        mobility = False
-                    if x ** 2 + y ** 2 >= r2 and mobility:
-                        #print(-dv/math.sqrt(x ** 2 + y ** 2))
-                        #pass
-                        lattice[-1] = lattice[-1].change_coordinates([0, 0, -(dv+r)/(dv+math.sqrt(x**2+y**2))])
-                    if (j == 0) and (i == 0) and (k == 0):
-                        mid_point = len(lattice) - 1
-
-    for i in range(len(lattice)):
-        x, y = lattice[i].return_coordinates()[0], lattice[i].return_coordinates()[1]
-        if lattice[i].return_mobility() is False and x**2 + y**2 >= r2:
-            lattice[i] = lattice[i].change_coordinates([0, 0, -lattice[i].return_coordinates()[2]])
-
-    return lattice, mid_point
-
-
-def create_lattice_sphere2(dim, r2, dv, d):
-    # d is distance between two nodes on the x-axis
-    # dim is the maximal summed factor for the lattice vectors
     lattice, mid_point = create_lattice(dim, d)
     r = math.sqrt(r2)
     for i in range(len(lattice)):
@@ -147,7 +101,7 @@ def create_lattice_sphere2(dim, r2, dv, d):
 
 
 def manipulate_lattice_random(lattice, n=1):
-    # changes z-component from n random nodes
+    # changes z-component from n random nodes. Not used in simulation.
     for k in range(0, n):
         i = rn.randint(0, len(lattice) - 1)
         j = rn.randint(0, 10) / 1
@@ -172,45 +126,6 @@ def manipulate_lattice_absolute_value(lattice, point, displace_value):
     lattice[point] = lattice[point].change_mobility(False)
 
     return lattice
-
-
-def plot_lattice(lattice):
-    # Rather old function. Might be removed in the future.
-    x = []
-    y = []
-    z = []
-    xb = []
-    yb = []
-    zb = []
-    xg = []
-    yg = []
-    zg = []
-
-    for i in range(0, len(lattice)):
-        node = lattice[i]
-        if i in [233, 17]:
-            xg.append(node.return_coordinates()[0])
-            yg.append(node.return_coordinates()[1])
-            zg.append(node.return_coordinates()[2])
-        elif node.return_mobility():
-            x.append(node.return_coordinates()[0])
-            y.append(node.return_coordinates()[1])
-            z.append(node.return_coordinates()[2])
-        elif not node.return_mobility():
-            xb.append(node.return_coordinates()[0])
-            yb.append(node.return_coordinates()[1])
-            zb.append(node.return_coordinates()[2])
-
-    fig = plt.figure(figsize=(15, 15))
-    ax = fig.add_subplot(111, projection='3d')
-    # ax.set_xlim([-20, 20])
-    # ax.set_ylim([-20, 20])
-    ax.set_xlabel('x-Achse')
-    ax.set_ylabel('y-Achse')
-    ax.scatter(x, y, z, c='blue')
-    ax.scatter(xb, yb, zb, c='red')
-    ax.scatter(xg, yg, zg, c='green')
-    plt.show()
 
 
 def adjacency_matrix(lattice, plot=False):
@@ -253,6 +168,7 @@ def adjacency_matrix(lattice, plot=False):
 
 
 def clear_lattice(A, As):
+    # Clears the lattice from floating nodes, that are connected to only one edge
     s = len(A[0])
     changes = True
     while changes:
@@ -272,6 +188,7 @@ def clear_lattice(A, As):
 
 
 def dilute_lattice_point(adjacency_matrix, percentile, lattice, seed):
+    # dilutes blue nodes from graph and the corresponding edges
     A = np.tril(adjacency_matrix[0])
     As = np.tril(adjacency_matrix[1])
     if percentile == 0:
@@ -292,24 +209,8 @@ def dilute_lattice_point(adjacency_matrix, percentile, lattice, seed):
     return clear_lattice(A, As)
 
 
-def dilute_lattice_point2(adjacency_matrix, percentile, lattice, seed):
-    A = np.tril(adjacency_matrix[0])
-    As = np.tril(adjacency_matrix[1])
-    if percentile == 0:
-        return clear_lattice(A, As)
-    n = len(A)
-    m = len(A[0])
-    blue_nodes = []
-
-    rn.seed(seed)
-    rows_to_delete = rn.sample(list(range(n)), int(hf.round_sig(n * percentile / 100)))
-    for j in rows_to_delete:
-        A[j] = np.zeros(m)
-
-    return clear_lattice(A, As)
-
-
 def dilute_lattice(adjacency_matrix, percentile):
+    # Dilutes random edges from the graph. Not used in simulation.
     A = np.triu(adjacency_matrix[0])
     As = np.triu(adjacency_matrix[1])
     rows, cols = np.where(A == 1)
@@ -549,7 +450,7 @@ def run_absolute_displacement(dim, displace_value, d=1, k=2, plot=False, method=
 
 def run_sphere(dim, rad, dv=0, d=1, k=2, plot=False, method='CG', tol=1.e-3, percentile=0,
                opt=None, true_convergence=True, x0=None, jac_func=energy_func_jac_sphere, seed=None):
-    ls = create_lattice_sphere2(dim, rad**2, dv, d)
+    ls = create_lattice_sphere(dim, rad ** 2, dv, d)
     l = ls[0]
     #l = manipulate_lattice_absolute_value(l, ls[1], -rad-dv)
     A = dilute_lattice_point(adjacency_matrix(l), percentile, l, seed)

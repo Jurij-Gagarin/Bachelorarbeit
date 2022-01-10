@@ -7,7 +7,6 @@ import hexagonal_lattice as hl
 from scipy import optimize as opt
 
 
-
 def set_axes_equal(ax):
     '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
     cubes as cubes, etc..  This is one possible solution to Matplotlib's
@@ -103,12 +102,12 @@ def value_from_path(path):
 
 
 def check_gradient(dim, rad, dv, perc, d=1, k=2):
-    ls = hl.create_lattice_sphere2(dim, rad**2, d)
+    ls = hl.create_lattice_sphere(dim, rad ** 2, d)
     l = ls[0]
-    A = hl.dilute_lattice(adjacency_matrix(l), perc)
+    A = hl.dilute_lattice(hl.adjacency_matrix(l), perc)
     r = hl.list_of_coordinates(l)
     preps = hl.energy_func_prep(np.triu(A[0]), np.triu(A[1]), d)
 
-    return opt.check_grad(energy_func_sphere, energy_func_jac_sphere, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
+    return opt.check_grad(hl.energy_func_sphere, hl.energy_func_jac_sphere, r[1], r[3], r[0], r[2], preps[0], preps[1], preps[2],
                           preps[3], l, preps[4], np.add(A[0], A[1]), {v: k for k, v in r[3].items()}, rad, dv, d, k)
 

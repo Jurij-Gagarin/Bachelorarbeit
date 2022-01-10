@@ -27,6 +27,45 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 
 
+def plot_lattice(lattice):
+    # Rather old function. Used to create simple plots
+    x = []
+    y = []
+    z = []
+    xb = []
+    yb = []
+    zb = []
+    xg = []
+    yg = []
+    zg = []
+
+    for i in range(0, len(lattice)):
+        node = lattice[i]
+        if i in [233, 17]:
+            xg.append(node.return_coordinates()[0])
+            yg.append(node.return_coordinates()[1])
+            zg.append(node.return_coordinates()[2])
+        elif node.return_mobility():
+            x.append(node.return_coordinates()[0])
+            y.append(node.return_coordinates()[1])
+            z.append(node.return_coordinates()[2])
+        elif not node.return_mobility():
+            xb.append(node.return_coordinates()[0])
+            yb.append(node.return_coordinates()[1])
+            zb.append(node.return_coordinates()[2])
+
+    fig = plt.figure(figsize=(15, 15))
+    ax = fig.add_subplot(111, projection='3d')
+    # ax.set_xlim([-20, 20])
+    # ax.set_ylim([-20, 20])
+    ax.set_xlabel('x-Achse')
+    ax.set_ylabel('y-Achse')
+    ax.scatter(x, y, z, c='blue')
+    ax.scatter(xb, yb, zb, c='red')
+    ax.scatter(xg, yg, zg, c='green')
+    plt.show()
+
+
 def generate_initial_plot_positions(lattice):
     pos = {i: (lattice[i].return_coordinates()[0],
                lattice[i].return_coordinates()[1],
@@ -154,7 +193,7 @@ def plot_graph(dim, r=1, displace_value=1, sphere=False, d=1, k=2, nodes=False, 
     l = ls[0]
     l = hl.manipulate_lattice_absolute_value(l, ls[1], displace_value=displace_value)
     if sphere:
-        ls = hl.create_lattice_sphere2(dim, r**2, displace_value, d)
+        ls = hl.create_lattice_sphere(dim, r ** 2, displace_value, d)
         l = ls[0]
     matrices = hl.dilute_lattice_point(hl.adjacency_matrix(l), percentile, l, seed)
     A = np.add(matrices[0], matrices[1])
@@ -173,7 +212,7 @@ def import_pickle(path):
 
 
 def contour_coords(dim, displace_value, path, tol=.1):
-    lattice = hl.create_lattice(dim)
+    lattice = hl.create_lattice(dim, 1)
     l = hl.manipulate_lattice_absolute_value(lattice[0], lattice[1], displace_value=displace_value)
     res = import_pickle(path)
     values = hl.assemble_result(res.x, hl.list_of_coordinates(l)[0], plot=False)
@@ -190,7 +229,7 @@ def contour_coords(dim, displace_value, path, tol=.1):
 
 def fit_contour(min_dim, max_dim, disp_value):
     print(f'max dim = {max_dim}')
-
+    disp_value = float(disp_value)
     for i in range(min_dim, max_dim + 1):
         if i % 2 == 0:
             print(f'working on dim = {i}')
@@ -203,13 +242,13 @@ def fit_contour(min_dim, max_dim, disp_value):
             x_new = np.linspace(m2, m1, num=1000, endpoint=True)
             f2 = interp1d(coords[0], coords[1])
 
-            plt.plot(x_new, f2(x_new), label=f'dim = {i}, E={hf.round_sig(coords[2])}')
-    plt.ylabel('z-Achse', size=16)
-    plt.xlabel('x-Achse', size=16)
+            plt.plot(x_new, f2(x_new), label=f'dim = {i}, $U={hf.round_sig(coords[2])}$ in J')
+    plt.ylabel('z in d', size=20)
+    plt.xlabel('x in d', size=20)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.legend(fontsize=15)
-    plt.title(f'Profil der minimierten, geraden Gitter dim 6-50 bei dv={disp_value}', size=20)
+    plt.legend(fontsize=13.5)
+    plt.title(rf'Profil der minimierten Gitter mit gerader dim 6-50 bei $\delta={disp_value}d$', size=20)
     plt.show()
 
 
